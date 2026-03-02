@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-delete-profile-option-to-the-user-s-profile-area-that-allows-an-authenticated-user-to-permanently-delete-their-profile-from-the-platform-the-action-must-prompt-the-user-with-a-confirmation-dialog-before-proceeding-upon-successful-deletion-the-user-should-be-logged-out-and-redirected-to-the-feed-page",
-      "featureTitle": "Add a 'Delete Profile' option to the user's profile area that allows an authenticated user to permanently delete their profile from the platform. The action must prompt the user with a confirmation dialog before proceeding. Upon successful deletion, the user should be logged out and redirected to the feed page.",
+      "featureId": "feature-every-authenticated-user-must-be-able-to-edit-their-own-profile-e-g-display-name-artist-name-the-backend-must-expose-an-update-profile-endpoint-gated-so-a-user-can-only-update-their-own-profile-principal-the-frontend-profile-menu-must-surface-an-edit-profile-action-that-opens-a-form-pre-filled-with-the-user-s-current-details-and-saves-changes-via-that-endpoint",
+      "featureTitle": "Every authenticated user must be able to edit their own profile (e.g., display name / artist name). The backend must expose an update-profile endpoint gated so a user can only update their own profile principal. The frontend profile menu must surface an 'Edit Profile' action that opens a form pre-filled with the user's current details and saves changes via that endpoint.",
       "files": [
-        "frontend/src/components/Layout.tsx",
+        "frontend/src/components/EditProfileDialog.tsx",
         "frontend/src/components/ProfileMenu.tsx",
         "frontend/src/hooks/useQueries.ts"
       ],
@@ -24,13 +24,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-an-optional-delete-content-button-to-each-content-item-that-the-authenticated-user-owns-the-button-should-only-be-visible-to-the-content-owner-clicking-it-must-show-a-confirmation-dialog-before-permanently-deleting-the-content-item-after-deletion-the-content-item-should-be-removed-from-the-feed",
-      "featureTitle": "Add an optional 'Delete Content' button to each content item that the authenticated user owns. The button should only be visible to the content owner. Clicking it must show a confirmation dialog before permanently deleting the content item. After deletion, the content item should be removed from the feed.",
+      "featureId": "feature-every-authenticated-user-must-be-able-to-delete-any-piece-of-content-they-own-the-backend-deletecontent-endpoint-must-verify-that-the-caller-s-principal-matches-the-content-owner-before-performing-the-deletion-the-delete-button-on-contentcard-and-contentdetailpage-must-be-visible-only-to-the-content-owner-and-must-show-a-confirmation-dialog-using-the-existing-confirmationdialog-component-before-executing-the-deletion-after-deletion-the-content-must-be-removed-from-the-feed-and-queue",
+      "featureTitle": "Every authenticated user must be able to delete any piece of content they own. The backend deleteContent endpoint must verify that the caller's principal matches the content owner before performing the deletion. The delete button on ContentCard and ContentDetailPage must be visible only to the content owner and must show a confirmation dialog (using the existing ConfirmationDialog component) before executing the deletion. After deletion the content must be removed from the feed and queue.",
       "files": [
-        "frontend/src/components/ConfirmationDialog.tsx",
-        "frontend/src/components/ContentCard.tsx",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/pages/ContentDetailPage.tsx"
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -43,6 +40,27 @@
       ],
       "testIds": [
         "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-every-authenticated-user-must-be-able-to-permanently-delete-their-own-account-profile-the-backend-deleteprofile-endpoint-must-verify-the-caller-s-principal-before-deleting-the-profile-and-all-associated-data-the-profilemenu-delete-account-option-must-show-a-confirmation-dialog-using-the-existing-confirmationdialog-component-before-executing-after-successful-deletion-the-user-must-be-logged-out-and-redirected-to-the-feed-home-page",
+      "featureTitle": "Every authenticated user must be able to permanently delete their own account (profile). The backend deleteProfile endpoint must verify the caller's principal before deleting the profile and all associated data. The ProfileMenu 'Delete Account' option must show a confirmation dialog (using the existing ConfirmationDialog component) before executing. After successful deletion the user must be logged out and redirected to the feed/home page.",
+      "files": [
+        "frontend/src/components/ProfileMenu.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
       ],
       "confidence": "high"
     }

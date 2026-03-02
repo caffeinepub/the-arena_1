@@ -1,64 +1,85 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add delete profile and delete content options",
+  "title": "Per-user profile management, content deletion, and account deletion",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add a 'Delete Profile' option to the user's profile area that allows an authenticated user to permanently delete their profile, with confirmation dialog, logout, and redirect to feed",
+      "summary": "Enable authenticated users to edit their own profile (display name/artist name) via a pre-filled form accessible from the ProfileMenu",
       "acceptanceCriteria": [
-        "A 'Delete Profile' button is visible to the authenticated user in the profile area.",
-        "Clicking 'Delete Profile' opens a confirmation dialog warning the user that the action is irreversible.",
-        "Confirming deletion calls the backend to remove the user's profile data.",
-        "After successful deletion, the user is logged out and redirected to the feed page."
+        "An authenticated user can open a profile edit form from the ProfileMenu dropdown.",
+        "The form is pre-populated with the user's current display name.",
+        "Submitting the form updates the profile in the backend and reflects the new name in the UI without a full page reload.",
+        "A user cannot update another user's profile — the backend rejects mismatched principals.",
+        "Unauthenticated users cannot access the edit profile action."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/ProfileMenu.tsx",
-          "operation": "create",
-          "description": "Create a new ProfileMenu component that displays the authenticated user's name and includes a 'Delete Profile' button. The component should use the authorization component to verify authentication and fetch the user profile. When the delete button is clicked, show a confirmation dialog using shadcn/ui AlertDialog component warning that the action is irreversible. Upon confirmation, call the backend deleteCallerUserProfile method, then trigger logout via useInternetIdentity and redirect to the feed page using TanStack Router navigation."
+          "operation": "modify",
+          "description": "Add an 'Edit Profile' menu item in the ProfileMenu dropdown that opens an edit profile dialog. The item should appear between the existing menu content and the Delete Account option. Wire the dialog trigger to show the edit profile form when clicked."
         },
         {
-          "path": "frontend/src/components/Layout.tsx",
-          "operation": "modify",
-          "description": "Wire the new ProfileMenu component into the Layout header next to the LoginButton. The ProfileMenu should only render when the user is authenticated (identity exists). Position it in the header navigation area so users can easily access their profile and delete option."
+          "path": "frontend/src/components/EditProfileDialog.tsx",
+          "operation": "create",
+          "description": "Create a dialog component using the existing shadcn/ui Dialog primitives that displays a form for editing the user's display name. Pre-populate the input field with the current user's name from the useGetCallerUserProfile hook. On form submission, call the useEditProfile mutation hook to update the profile, invalidate the currentUserProfile query to refresh the displayed name, and close the dialog. Include validation to prevent empty names and show a pending state during the mutation."
         },
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add a new useMutation hook for deleting the caller's profile. The mutation should call actor.deleteCallerUserProfile() and invalidate the 'currentUserProfile' query key on success to ensure any cached profile data is cleared."
+          "description": "Add a useEditProfile mutation hook that calls actor.editProfile with the updated UserProfile object. On success, invalidate the 'currentUserProfile' query key to trigger a refetch so the new name appears immediately in the UI. Handle errors gracefully by displaying them to the user via toast or inline message."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Add an optional 'Delete Content' button to each content item owned by the authenticated user, with confirmation dialog and UI removal after deletion",
+      "summary": "Enable authenticated users to delete any content they own via a confirmation dialog, removing it from the feed and playback queue",
       "acceptanceCriteria": [
-        "A 'Delete Content' button is rendered on content cards and/or the content detail page only when the authenticated user is the content owner.",
-        "Clicking 'Delete Content' opens a confirmation dialog before any deletion occurs.",
-        "Confirming deletion calls the backend to permanently remove the content item.",
-        "After successful deletion, the content is removed from the feed and any related UI (e.g., queue, detail page) without requiring a full page reload."
+        "The delete button on a content card is visible only when the logged-in user is the content owner.",
+        "Clicking delete opens the ConfirmationDialog before any destructive action.",
+        "Confirming deletion calls the backend, which rejects the call if the caller is not the owner.",
+        "The deleted content card disappears from the feed immediately after a successful deletion.",
+        "The deleted content is also removed from the playback queue if present.",
+        "Non-owners do not see the delete button and cannot delete content via the backend."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/ContentCard.tsx",
           "operation": "modify",
-          "description": "Add a 'Delete Content' button that only renders when the authenticated user's Principal matches the content's uploader Principal. Use the authorization component to access the current user's identity and compare it with content.uploader. The delete button should open a confirmation dialog using shadcn/ui AlertDialog, warning that deletion is permanent. On confirmation, call the deleteContent mutation and optimistically remove the content card from the UI."
+          "description": "Ensure the delete button is conditionally rendered only when the logged-in user's principal matches the content.uploader principal using the isContentOwner utility from useInternetIdentity. The delete button already uses the ConfirmationDialog component and calls the useDeleteContent mutation; verify that the mutation invalidates both the content list queries and the playback queue query so deleted content disappears from the feed and queue immediately."
         },
         {
           "path": "frontend/src/pages/ContentDetailPage.tsx",
           "operation": "modify",
-          "description": "Add a 'Delete Content' button to the content detail page that only renders when the authenticated user is the content owner. Use the authorization component to verify ownership by comparing the user's Principal with content.uploader. When clicked, show a confirmation dialog using shadcn/ui AlertDialog. On confirmation, call the deleteContent mutation, and on success, navigate back to the feed page using TanStack Router."
+          "description": "Add a delete button to the ContentDetailPage that is visible only to the content owner (check identity.getPrincipal() against content.uploader). Use the existing ConfirmationDialog component to prompt for confirmation before calling the useDeleteContent mutation. On successful deletion, navigate back to the feed page using the router. Ensure the mutation invalidates the playback queue query to remove the deleted content from the queue."
         },
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add a new useMutation hook for deleting content. The mutation should accept a contentId parameter, call actor.deleteContent(contentId), and on success invalidate all content-related query keys including feed queries, queue queries, and specific content detail queries to ensure the deleted content is removed from all cached data."
+          "description": "Ensure the useDeleteContent mutation invalidates both the content list query keys ('allContent', 'contentBySearch') and the 'playbackQueue' query key on success, so deleted content is removed from the feed and queue immediately. Verify error handling for backend authorization failures and display appropriate error messages to the user."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Enable authenticated users to permanently delete their own account via a confirmation dialog in the ProfileMenu, logging them out and redirecting to the feed",
+      "acceptanceCriteria": [
+        "The 'Delete Account' option is present in the ProfileMenu for any authenticated user.",
+        "Clicking 'Delete Account' opens a confirmation dialog warning the user that the action is permanent.",
+        "Confirming calls the backend deleteProfile endpoint, which validates the caller's principal.",
+        "After successful deletion the session is cleared, the user is logged out, and they are redirected to the feed page.",
+        "A user cannot delete another user's account — the backend rejects mismatched principals."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ProfileMenu.tsx",
+          "operation": "modify",
+          "description": "Ensure the existing 'Delete Account' menu item uses the ConfirmationDialog component to prompt the user with a warning that account deletion is permanent. On confirmation, call the useDeleteProfile mutation hook (not useDeleteUserProfile). After successful deletion, call clear() from useInternetIdentity to log out the user, clear the React Query cache via queryClient.clear(), and navigate to the feed page using the router."
         },
         {
-          "path": "frontend/src/components/ConfirmationDialog.tsx",
-          "operation": "create",
-          "description": "Create a reusable ConfirmationDialog component using shadcn/ui AlertDialog that accepts props for title, description, confirmLabel, cancelLabel, onConfirm, and onCancel callbacks. This component will be used for both profile and content deletion confirmations to maintain consistency and reduce duplication."
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add a useDeleteProfile mutation hook that calls actor.deleteUserProfile (the backend method name). On success, the calling component will handle logout and navigation. Include error handling to display backend authorization failures or other errors to the user via toast or inline message."
         }
       ]
     }

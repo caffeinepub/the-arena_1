@@ -70,9 +70,10 @@ export interface backendInterface {
     addToQueue(contentId: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     clearQueue(): Promise<void>;
-    deleteCallerUserProfile(): Promise<void>;
     deleteComment(contentId: ContentId, commentId: CommentId): Promise<void>;
-    deleteContent(id: string): Promise<void>;
+    deleteContent(contentId: ContentId): Promise<void>;
+    deleteUserProfile(): Promise<void>;
+    editProfile(updatedProfile: UserProfile): Promise<void>;
     getAllContent(_start: bigint, _limit: bigint): Promise<Array<ContentMetadata>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;

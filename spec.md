@@ -1,13 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Add delete profile and delete content functionality to The Arena platform, with confirmation dialogs and owner-only access controls.
+**Goal:** Give every authenticated user control over their own profile and content — including editing their profile, deleting their own content, and permanently deleting their account.
 
 **Planned changes:**
-- Add a "Delete Profile" button in the authenticated user's profile area that opens a confirmation dialog before permanently deleting the profile, then logs the user out and redirects to the feed page.
-- Expose a backend `deleteProfile` endpoint that removes the caller's profile record.
-- Add a "Delete Content" button on content cards and/or the content detail page, visible only to the content owner, that opens a confirmation dialog before permanently deleting the content item.
-- Remove deleted content from the feed and related UI without a full page reload.
-- Expose a backend `deleteContent` endpoint that accepts a content ID and only allows deletion by the content owner.
+- Add a backend `updateProfile` endpoint that only allows a user to update their own profile (validated by principal); expose an "Edit Profile" form in the ProfileMenu pre-filled with current display name.
+- Add a backend `deleteContent` endpoint that verifies the caller owns the content before deleting; show a delete button on ContentCard and ContentDetailPage only to the content owner, guarded by a ConfirmationDialog, and remove the item from the feed and playback queue on success.
+- Add a backend `deleteProfile` endpoint that verifies the caller's principal before permanently deleting the account and all associated data; add a "Delete Account" option in the ProfileMenu behind a ConfirmationDialog, then log the user out and redirect to the feed on success.
+- All ownership checks enforced on the backend; use the existing ConfirmationDialog component for all destructive prompts.
 
-**User-visible outcome:** Authenticated users can permanently delete their own profile or any of their own content items via confirmation dialogs, with the UI updating immediately after each deletion.
+**User-visible outcome:** Logged-in users can edit their display name from the profile menu, delete any content they own with a confirmation step, and permanently delete their own account with a confirmation step followed by automatic logout.

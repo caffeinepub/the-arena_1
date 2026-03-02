@@ -26,6 +26,7 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const FileType = IDL.Variant({
   'audioMp3' : IDL.Null,
@@ -48,7 +49,6 @@ export const ContentMetadata = IDL.Record({
   'comments' : IDL.Nat,
   'uploadTime' : IDL.Int,
 });
-export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const Comment = IDL.Record({
   'id' : CommentId,
   'contentId' : ContentId,
@@ -95,9 +95,10 @@ export const idlService = IDL.Service({
   'addToQueue' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'clearQueue' : IDL.Func([], [], []),
-  'deleteCallerUserProfile' : IDL.Func([], [], []),
   'deleteComment' : IDL.Func([ContentId, CommentId], [], []),
-  'deleteContent' : IDL.Func([IDL.Text], [], []),
+  'deleteContent' : IDL.Func([ContentId], [], []),
+  'deleteUserProfile' : IDL.Func([], [], []),
+  'editProfile' : IDL.Func([UserProfile], [], []),
   'getAllContent' : IDL.Func(
       [IDL.Nat, IDL.Nat],
       [IDL.Vec(ContentMetadata)],
@@ -166,6 +167,7 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
+  const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const ExternalBlob = IDL.Vec(IDL.Nat8);
   const FileType = IDL.Variant({
     'audioMp3' : IDL.Null,
@@ -188,7 +190,6 @@ export const idlFactory = ({ IDL }) => {
     'comments' : IDL.Nat,
     'uploadTime' : IDL.Int,
   });
-  const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const Comment = IDL.Record({
     'id' : CommentId,
     'contentId' : ContentId,
@@ -235,9 +236,10 @@ export const idlFactory = ({ IDL }) => {
     'addToQueue' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'clearQueue' : IDL.Func([], [], []),
-    'deleteCallerUserProfile' : IDL.Func([], [], []),
     'deleteComment' : IDL.Func([ContentId, CommentId], [], []),
-    'deleteContent' : IDL.Func([IDL.Text], [], []),
+    'deleteContent' : IDL.Func([ContentId], [], []),
+    'deleteUserProfile' : IDL.Func([], [], []),
+    'editProfile' : IDL.Func([UserProfile], [], []),
     'getAllContent' : IDL.Func(
         [IDL.Nat, IDL.Nat],
         [IDL.Vec(ContentMetadata)],

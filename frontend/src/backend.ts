@@ -163,9 +163,10 @@ export interface backendInterface {
     addToQueue(contentId: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     clearQueue(): Promise<void>;
-    deleteCallerUserProfile(): Promise<void>;
     deleteComment(contentId: ContentId, commentId: CommentId): Promise<void>;
-    deleteContent(id: string): Promise<void>;
+    deleteContent(contentId: ContentId): Promise<void>;
+    deleteUserProfile(): Promise<void>;
+    editProfile(updatedProfile: UserProfile): Promise<void>;
     getAllContent(_start: bigint, _limit: bigint): Promise<Array<ContentMetadata>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -341,20 +342,6 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async deleteCallerUserProfile(): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.deleteCallerUserProfile();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.deleteCallerUserProfile();
-            return result;
-        }
-    }
     async deleteComment(arg0: ContentId, arg1: CommentId): Promise<void> {
         if (this.processError) {
             try {
@@ -369,7 +356,7 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async deleteContent(arg0: string): Promise<void> {
+    async deleteContent(arg0: ContentId): Promise<void> {
         if (this.processError) {
             try {
                 const result = await this.actor.deleteContent(arg0);
@@ -380,6 +367,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.deleteContent(arg0);
+            return result;
+        }
+    }
+    async deleteUserProfile(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteUserProfile();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteUserProfile();
+            return result;
+        }
+    }
+    async editProfile(arg0: UserProfile): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.editProfile(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.editProfile(arg0);
             return result;
         }
     }

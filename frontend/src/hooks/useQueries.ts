@@ -41,20 +41,40 @@ export function useSaveCallerUserProfile() {
   });
 }
 
-export function useDeleteCallerUserProfile() {
+export function useEditProfile() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (updatedProfile: UserProfile) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.editProfile(updatedProfile);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
+  });
+}
+
+export function useDeleteProfile() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      return actor.deleteCallerUserProfile();
+      return actor.deleteUserProfile();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
       queryClient.invalidateQueries({ queryKey: ['allContent'] });
     },
   });
+}
+
+// Keep backward-compatible alias
+export function useDeleteCallerUserProfile() {
+  return useDeleteProfile();
 }
 
 export function useGetUserProfile(principal: Principal | undefined) {
@@ -122,6 +142,7 @@ export function useDeleteContent() {
     },
     onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ['allContent'] });
+      queryClient.invalidateQueries({ queryKey: ['contentBySearch'] });
       queryClient.invalidateQueries({ queryKey: ['content', id] });
       queryClient.invalidateQueries({ queryKey: ['playbackQueue'] });
     },

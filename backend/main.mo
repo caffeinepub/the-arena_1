@@ -9,14 +9,11 @@ import Iter "mo:core/Iter";
 import Order "mo:core/Order";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
-import Migration "migration";
+
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 
-
-
-(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -95,71 +92,83 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  public shared ({ caller }) func deleteCallerUserProfile() : async () {
+  // New 'editProfile' method allows users to update (only) their own profile
+  public shared ({ caller }) func editProfile(updatedProfile : UserProfile) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can edit their profile");
+    };
+
+    if (not userProfiles.containsKey(caller)) {
+      Runtime.trap("Cannot edit non-existent profile");
+    };
+
+    userProfiles.add(caller, updatedProfile);
+  };
+
+  public shared ({ caller }) func deleteUserProfile() : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can delete their profiles");
     };
 
-    switch (userProfiles.get(caller)) {
-      case (null) { Runtime.trap("Profile not found") };
-      case (?_) {
-        userProfiles.remove(caller);
+    if (not userProfiles.containsKey(caller)) {
+      Runtime.trap("Cannot delete non-existent profile");
+    };
 
-        let toDelete = contentMap.filter(
-          func(_id, content) {
-            content.uploader == caller;
-          }
-        );
+    userProfiles.remove(caller);
 
-        for ((id, _) in toDelete.entries()) {
-          contentMap.remove(id);
+    let toDelete = contentMap.filter(
+      func(_id, content) {
+        content.uploader == caller;
+      }
+    );
+
+    for ((id, _) in toDelete.entries()) {
+      contentMap.remove(id);
+    };
+
+    playbackQueues.remove(caller);
+
+    let entriesToRemove = contentLikes.toArray();
+    for ((contentId, likesSet) in entriesToRemove.values()) {
+      if (likesSet.contains(caller)) {
+        let newLikesSet = Set.empty<Principal>();
+        let filtered = likesSet.filter(func(existing) { existing != caller });
+        for (item in filtered.values()) {
+          newLikesSet.add(item);
         };
+        contentLikes.add(contentId, newLikesSet);
 
-        playbackQueues.remove(caller);
-
-        let entriesToRemove = contentLikes.toArray();
-        for ((contentId, likesSet) in entriesToRemove.values()) {
-          if (likesSet.contains(caller)) {
-            let newLikesSet = Set.empty<Principal>();
-            let filtered = likesSet.filter(func(existing) { existing != caller });
-            for (item in filtered.values()) {
-              newLikesSet.add(item);
+        var updatedMetadata = contentMap.get(contentId);
+        switch (updatedMetadata) {
+          case (null) {};
+          case (?content) {
+            let updatedLikes = switch (contentLikes.get(contentId)) {
+              case (null) { 0 };
+              case (?likesSet) { likesSet.size() };
             };
-            contentLikes.add(contentId, newLikesSet);
-
-            var updatedMetadata = contentMap.get(contentId);
-            switch (updatedMetadata) {
-              case (null) {};
-              case (?content) {
-                let updatedLikes = switch (contentLikes.get(contentId)) {
-                  case (null) { 0 };
-                  case (?likesSet) { likesSet.size() };
-                };
-                let newMetadata = {
-                  content with
-                  likes = updatedLikes;
-                };
-                contentMap.add(contentId, newMetadata);
-              };
+            let newMetadata = {
+              content with
+              likes = updatedLikes;
             };
+            contentMap.add(contentId, newMetadata);
           };
         };
       };
     };
   };
 
-  public shared ({ caller }) func deleteContent(id : Text) : async () {
+  public shared ({ caller }) func deleteContent(contentId : ContentId) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can delete content");
     };
 
-    switch (contentMap.get(id)) {
+    switch (contentMap.get(contentId)) {
       case (null) { Runtime.trap("Content not found") };
       case (?content) {
         if (content.uploader != caller) {
           Runtime.trap("Unauthorized");
         };
-        contentMap.remove(id);
+        contentMap.remove(contentId);
       };
     };
   };
@@ -479,4 +488,3 @@ actor {
     contentMap.add(contentId, updatedContent);
   };
 };
-

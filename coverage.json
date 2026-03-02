@@ -1,66 +1,71 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-03-02T21:14:18.702Z",
+  "generatedAt": "2026-03-02T21:26:54.549Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a 'Delete Profile' option to the user's profile area that allows an authenticated user to permanently delete their profile from the platform. The action must prompt the user with a confirmation dialog before proceeding. Upon successful deletion, the user should be logged out and redirected to the feed page.",
+        "summary": "Every authenticated user must be able to edit their own profile (e.g., display name / artist name). The backend must expose an update-profile endpoint gated so a user can only update their own profile principal. The frontend profile menu must surface an 'Edit Profile' action that opens a form pre-filled with the user's current details and saves changes via that endpoint.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/ProfileMenu.tsx",
-          "frontend/src/components/Layout.tsx",
+          "frontend/src/components/EditProfileDialog.tsx",
           "frontend/src/hooks/useQueries.ts"
         ],
         "matchedFiles": [
           "frontend/src/components/ProfileMenu.tsx",
-          "frontend/src/components/Layout.tsx",
+          "frontend/src/components/EditProfileDialog.tsx",
           "frontend/src/hooks/useQueries.ts"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Add an optional 'Delete Content' button to each content item that the authenticated user owns. The button should only be visible to the content owner. Clicking it must show a confirmation dialog before permanently deleting the content item. After deletion, the content item should be removed from the feed.",
+        "summary": "Every authenticated user must be able to delete any piece of content they own. The backend deleteContent endpoint must verify that the caller's principal matches the content owner before performing the deletion. The delete button on ContentCard and ContentDetailPage must be visible only to the content owner and must show a confirmation dialog (using the existing ConfirmationDialog component) before executing the deletion. After deletion the content must be removed from the feed and queue.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/ContentCard.tsx",
           "frontend/src/pages/ContentDetailPage.tsx",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/ConfirmationDialog.tsx"
+          "frontend/src/hooks/useQueries.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/ContentCard.tsx",
-          "frontend/src/pages/ContentDetailPage.tsx",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/ConfirmationDialog.tsx"
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Every authenticated user must be able to permanently delete their own account (profile). The backend deleteProfile endpoint must verify the caller's principal before deleting the profile and all associated data. The ProfileMenu 'Delete Account' option must show a confirmation dialog (using the existing ConfirmationDialog component) before executing. After successful deletion the user must be logged out and redirected to the feed/home page.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/ProfileMenu.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/ProfileMenu.tsx",
+          "frontend/src/hooks/useQueries.ts"
         ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
-    "frontend/src/components/ConfirmationDialog.tsx",
-    "frontend/src/components/ContentCard.tsx",
-    "frontend/src/components/Layout.tsx",
+    "frontend/src/components/EditProfileDialog.tsx",
     "frontend/src/components/ProfileMenu.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
     "frontend/src/hooks/useQueries.ts",
-    "frontend/src/pages/ContentDetailPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

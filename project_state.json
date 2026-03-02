@@ -1,24 +1,34 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Project includes music/video upload for Gail and now adding profile/content deletion features.",
-  "architectural_notes": [],
+  "summary": "A user-facing platform where every user can manage their own profile, delete their own content, and delete their own account.",
+  "architectural_notes": [
+    "Users should only have permissions to manage/delete their own profile, content, and account — not other users' data."
+  ],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-add-a-delete-profile-option-to-the-user-s-profile-area-that-allows-an-authenticated-user-to-permanently-delete-their-profile-from-the-platform-the-action-must-prompt-the-user-with-a-confirmation-dialog-before-proceeding-upon-successful-deletion-the-user-should-be-logged-out-and-redirected-to-the-feed-page",
-      "title": "Add a 'Delete Profile' option to the user's profile area that allows an authenticated user to permanently delete their profile from the platform. The action must prompt the user with a confirmation dialog before proceeding. Upon successful deletion, the user should be logged out and redirected to the feed page.",
+      "id": "feature-every-authenticated-user-must-be-able-to-edit-their-own-profile-e-g-display-name-artist-name-the-backend-must-expose-an-update-profile-endpoint-gated-so-a-user-can-only-update-their-own-profile-principal-the-frontend-profile-menu-must-surface-an-edit-profile-action-that-opens-a-form-pre-filled-with-the-user-s-current-details-and-saves-changes-via-that-endpoint",
+      "title": "Every authenticated user must be able to edit their own profile (e.g., display name / artist name). The backend must expose an update-profile endpoint gated so a user can only update their own profile principal. The frontend profile menu must surface an 'Edit Profile' action that opens a form pre-filled with the user's current details and saves changes via that endpoint.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-an-optional-delete-content-button-to-each-content-item-that-the-authenticated-user-owns-the-button-should-only-be-visible-to-the-content-owner-clicking-it-must-show-a-confirmation-dialog-before-permanently-deleting-the-content-item-after-deletion-the-content-item-should-be-removed-from-the-feed",
-      "title": "Add an optional 'Delete Content' button to each content item that the authenticated user owns. The button should only be visible to the content owner. Clicking it must show a confirmation dialog before permanently deleting the content item. After deletion, the content item should be removed from the feed.",
+      "id": "feature-every-authenticated-user-must-be-able-to-delete-any-piece-of-content-they-own-the-backend-deletecontent-endpoint-must-verify-that-the-caller-s-principal-matches-the-content-owner-before-performing-the-deletion-the-delete-button-on-contentcard-and-contentdetailpage-must-be-visible-only-to-the-content-owner-and-must-show-a-confirmation-dialog-using-the-existing-confirmationdialog-component-before-executing-the-deletion-after-deletion-the-content-must-be-removed-from-the-feed-and-queue",
+      "title": "Every authenticated user must be able to delete any piece of content they own. The backend deleteContent endpoint must verify that the caller's principal matches the content owner before performing the deletion. The delete button on ContentCard and ContentDetailPage must be visible only to the content owner and must show a confirmation dialog (using the existing ConfirmationDialog component) before executing the deletion. After deletion the content must be removed from the feed and queue.",
       "reqIds": [
         "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-every-authenticated-user-must-be-able-to-permanently-delete-their-own-account-profile-the-backend-deleteprofile-endpoint-must-verify-the-caller-s-principal-before-deleting-the-profile-and-all-associated-data-the-profilemenu-delete-account-option-must-show-a-confirmation-dialog-using-the-existing-confirmationdialog-component-before-executing-after-successful-deletion-the-user-must-be-logged-out-and-redirected-to-the-feed-home-page",
+      "title": "Every authenticated user must be able to permanently delete their own account (profile). The backend deleteProfile endpoint must verify the caller's principal before deleting the profile and all associated data. The ProfileMenu 'Delete Account' option must show a confirmation dialog (using the existing ConfirmationDialog component) before executing. After successful deletion the user must be logged out and redirected to the feed/home page.",
+      "reqIds": [
+        "REQ-3"
       ],
       "version": 1
     }
@@ -26,17 +36,24 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add delete profile option for users",
+      "summary": "Allow every user to control/manage their own profile",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Add optional delete content button",
+      "summary": "Allow every user to delete their own content",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Allow every user to delete their own account",
       "reqIds": [],
       "status": "pending"
     }
   ],
+  "gameProjectType": "none",
   "projectName": "The Arena",
   "clarification_mode": "instant",
   "clarification_rounds": 0
