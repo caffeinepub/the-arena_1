@@ -1,0 +1,17 @@
+{
+  "frontend/src/index.css": "Global styles implementing the Arena dark theme with OKLCH color tokens, Outfit/Bebas Neue fonts, neon gold accent colors, glow utility classes, and card hover effects.",
+  "frontend/tailwind.config.js": "Extended Tailwind config with arena-specific color tokens (arena-dark, arena-neon, arena-surface), custom font families (Outfit, Bebas Neue), neon box-shadow utilities, and pulse-neon animation.",
+  "frontend/src/App.tsx": "Main app component with TanStack Router setup for Feed (/), Upload (/upload), and ContentDetail (/content/:id) routes, wrapped in a Layout shell with profile setup modal logic.",
+  "frontend/src/hooks/useQueries.ts": "All React Query hooks for the backend: useGetCallerUserProfile, useSaveCallerUserProfile, useGetAllContent, useGetContent, useIncrementViews, and useUploadContent with ExternalBlob integration.",
+  "frontend/src/components/Layout.tsx": "App shell with sticky header (logo, nav links, login button), responsive mobile nav bar, and footer with caffeine.ai attribution and dynamic year.",
+  "frontend/src/components/LoginButton.tsx": "Internet Identity login/logout button with loading state, query cache clearing on logout, and arena-themed styling.",
+  "frontend/src/pages/ProfileSetupModal.tsx": "First-login modal that blocks app access until the user sets an artist/creator name, using the saveCallerUserProfile mutation.",
+  "frontend/src/components/ContentCard.tsx": "Responsive content card displaying thumbnail/cover image, title, uploader, file type badge, view/like counts, and hover play overlay with neon glow effects.",
+  "frontend/src/components/MediaPlayer.tsx": "HTML5 audio/video player component that uses ExternalBlob.getDirectURL() for streaming, with album cover display for audio tracks.",
+  "frontend/src/components/FileUploadInput.tsx": "Reusable drag-and-drop file input with file type icons, size display, and clear button, styled with the arena dark theme.",
+  "frontend/src/utils/videoFrameCapture.ts": "Utility function that captures the current frame of an HTMLVideoElement as a PNG Blob using canvas.toBlob().",
+  "frontend/src/components/ThumbnailCreator.tsx": "Thumbnail creation component that shows a video scrubber with frame capture for video files, or an image upload field for audio files, with preview display.",
+  "frontend/src/pages/UploadPage.tsx": "Upload form page for audio/video content with title, description, album cover, and thumbnail sections; fixes the ArrayBuffer type error by using a dedicated `fileToExternalBlob` helper that casts `arrayBuffer()` result to `ArrayBuffer` before wrapping in `Uint8Array<ArrayBuffer>`.",
+  "frontend/src/pages/FeedPage.tsx": "Discovery feed page with hero banner, filter tabs (All/Music/Video), responsive content grid, skeleton loading states, and uploader name resolution.",
+  "frontend/src/pages/ContentDetailPage.tsx": "Content detail page with media player, metadata display (views, likes, comments, date), uploader info, description, and fire-and-forget view increment on load."
+}

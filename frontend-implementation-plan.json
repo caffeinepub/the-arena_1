@@ -1,0 +1,159 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "The Arena – AI Music & Video Social Platform Frontend Implementation",
+  "requirements": [
+    {
+      "id": "REQ-2",
+      "summary": "Build content upload flow supporting MP3, WAV, and video formats with optional album cover and thumbnail uploads, responsive across mobile and desktop",
+      "acceptanceCriteria": [
+        "File picker accepts .mp3, .wav, .mp4, .webm, .mov extensions",
+        "Album cover upload field accepts image files (PNG, JPG, WebP)",
+        "Thumbnail section allows either uploading an image or capturing a frame from a video preview",
+        "Upload form renders correctly on mobile viewport (≤ 768px) and desktop",
+        "File content is converted to a Uint8Array/Blob and submitted to the backend uploadContent call"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/UploadPage.tsx",
+          "operation": "create",
+          "description": "Create upload page component with file selection for audio/video files (.mp3, .wav, .mp4, .webm, .mov), title and description inputs, optional album cover image upload, and optional thumbnail creation/upload section. Convert selected files to Uint8Array and use ExternalBlob.fromBytes() per the blob-storage component's usage instructions before submitting to backend.uploadContent(). Include mobile-responsive layout with proper form validation. Verify the blob-storage component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/FileUploadInput.tsx",
+          "operation": "create",
+          "description": "Create reusable file input component that accepts file type restrictions via props (audio, video, or image), displays selected file name and size, provides visual feedback for drag-and-drop support, and returns File object to parent component. Style consistently with arena theme using dark backgrounds and neon accent colors."
+        },
+        {
+          "path": "frontend/src/hooks/useUploadContent.ts",
+          "operation": "create",
+          "description": "Create React Query mutation hook that calls backend.uploadContent() with all required parameters including ExternalBlob instances created from file data. Use the blob-storage component's ExternalBlob.fromBytes() method and withUploadProgress() to track upload progress. Handle success and error states, returning mutation status and progress percentage. Verify the blob-storage component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Create discovery feed page displaying uploaded content as cards with thumbnail, title, uploader name, file type badge, and like count, with detail view for playback",
+      "acceptanceCriteria": [
+        "Feed page renders a responsive grid of content cards",
+        "Each card displays thumbnail/album cover, title, uploader, file type badge, and like count",
+        "Audio files render an HTML5 audio player on the detail page",
+        "Video files render an HTML5 video player on the detail page",
+        "Detail page displays album cover for audio tracks alongside the player"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/FeedPage.tsx",
+          "operation": "create",
+          "description": "Create feed page component that fetches content using backend.getAllContent() and displays content cards in a responsive grid layout. Implement infinite scroll or pagination using the _start and _limit parameters. Each card shows thumbnail (using ExternalBlob.getDirectURL() per blob-storage component usage), title, uploader name (fetch using backend.getUserProfile()), file type badge, and like count. Cards link to detail view. Use default placeholder images from generated assets when thumbnails are missing: frontend/public/assets/generated/default-audio-thumb.dim_400x400.png for audio and frontend/public/assets/generated/default-video-thumb.dim_400x400.png for video. Apply arena theme with dark backgrounds and neon highlights on hover."
+        },
+        {
+          "path": "frontend/src/pages/ContentDetailPage.tsx",
+          "operation": "create",
+          "description": "Create content detail page that fetches single content item using backend.getContent(id) and displays full metadata with appropriate media player. For audio files, render HTML5 audio element with controls using contentBlob.getDirectURL() and display album cover if available. For video files, render HTML5 video element with controls. Show title, description, uploader name, upload timestamp, view count, like count, and comment count. Call backend.incrementViews() on page load. Apply arena theme styling throughout."
+        },
+        {
+          "path": "frontend/src/components/ContentCard.tsx",
+          "operation": "create",
+          "description": "Create reusable content card component that displays thumbnail/album cover image using ExternalBlob.getDirectURL(), title, uploader name, file type badge, and like count. Accept ContentMetadata as prop and handle click to navigate to detail page. Include hover effects with neon glow borders consistent with arena theme. Render default placeholders frontend/public/assets/generated/default-audio-thumb.dim_400x400.png or frontend/public/assets/generated/default-video-thumb.dim_400x400.png when thumbnailBlob is null."
+        },
+        {
+          "path": "frontend/src/components/MediaPlayer.tsx",
+          "operation": "create",
+          "description": "Create media player component that renders HTML5 audio or video element based on file type. Accept contentBlob (ExternalBlob) and fileType props. Use ExternalBlob.getDirectURL() to set the src attribute per blob-storage component usage. For audio players, include album cover display prop. Style controls to match arena theme with custom progress bars and buttons using neon accent colors."
+        },
+        {
+          "path": "frontend/src/hooks/useGetAllContent.ts",
+          "operation": "create",
+          "description": "Create React Query hook that fetches content feed using backend.getAllContent(_start, _limit). Support pagination parameters and return content array with loading and error states. Configure appropriate cache time and refetch strategies."
+        },
+        {
+          "path": "frontend/src/hooks/useGetContent.ts",
+          "operation": "create",
+          "description": "Create React Query hook that fetches single content item by id using backend.getContent(id). Return ContentMetadata with loading and error states. Enable query only when id is provided."
+        },
+        {
+          "path": "frontend/src/hooks/useIncrementViews.ts",
+          "operation": "create",
+          "description": "Create React Query mutation hook that calls backend.incrementViews(id) to track content views. Handle mutation silently without blocking UI, implementing fire-and-forget pattern."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Implement thumbnail creation tool allowing video frame capture via scrubber and custom image upload for audio tracks",
+      "acceptanceCriteria": [
+        "Video upload shows a video preview with a time scrubber",
+        "A 'Capture Frame' button exports the current video frame as a PNG thumbnail using a canvas element",
+        "Captured thumbnail is shown as a preview image before the user submits the form",
+        "Audio upload shows an image upload field labeled 'Thumbnail / Album Cover'",
+        "Selected/captured thumbnail image is included in the backend upload call"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ThumbnailCreator.tsx",
+          "operation": "create",
+          "description": "Create thumbnail creation component that renders differently based on file type. For video files, display video preview element with HTML5 range input scrubber allowing time seek, and 'Capture Frame' button that draws current video frame to canvas element and exports as PNG Blob. For audio files, render image upload field labeled 'Thumbnail / Album Cover'. Show thumbnail preview after capture or upload. Return thumbnail as File or Blob to parent component via callback. Style with arena theme using dark backgrounds and neon button accents."
+        },
+        {
+          "path": "frontend/src/utils/videoFrameCapture.ts",
+          "operation": "create",
+          "description": "Create utility function that accepts HTMLVideoElement and returns a Promise<Blob> containing PNG image of current video frame. Use canvas.toBlob() method to generate the thumbnail. Handle error cases when video is not loaded or canvas is unavailable."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Apply bold, dark arena-style visual theme with dark backgrounds, neon accent colors, strong typography, and glowing hover effects throughout the application",
+      "acceptanceCriteria": [
+        "Global background is dark (charcoal or near-black)",
+        "Primary accent color is a vivid neon gold or orange applied to buttons, badges, and highlights",
+        "Cards have a subtle glow or border effect on hover",
+        "Typography uses a bold, modern sans-serif font",
+        "Theme is consistent across the feed, upload, and detail pages"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Update global styles to implement arena theme: set body background to dark charcoal (#1a1a1a or similar), define CSS custom properties for neon gold/orange accent color (#ff9500 or #ffd700), configure base typography with bold sans-serif font family (e.g., 'Inter', 'Poppins', or 'Outfit' from Google Fonts), add utility classes for neon glow effects using box-shadow, and set default text colors to light gray with high contrast. Ensure all theme variables are accessible throughout the app."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Extend Tailwind theme to include arena-specific colors: add 'arena-dark' for backgrounds (#0f0f0f, #1a1a1a), 'arena-neon' for primary accent (neon gold #ffd700 or neon orange #ff9500), 'arena-glow' for hover effects. Configure custom box-shadow utilities for card glow effects. Set default background and text colors to arena theme values. Add custom font family configuration for bold, modern sans-serif."
+        },
+        {
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "create",
+          "description": "Create layout wrapper component that applies arena theme consistently across all pages. Include header with 'The Arena' wordmark logo using generated asset frontend/public/assets/generated/arena-logo.dim_400x120.png, navigation links (Feed, Upload), and login/logout button using the authorization component. Set dark background and ensure proper spacing. Include footer if needed. Wrap all page content with this layout component."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Update App component to wrap all routes with Layout component. Configure React Router with routes for FeedPage (/), UploadPage (/upload), and ContentDetailPage (/content/:id). Integrate authorization component by rendering LoginButton in Layout header. Ensure authenticated users see profile setup modal on first login using authorization component's profile flow. Apply arena theme classes to root app container."
+        },
+        {
+          "path": "frontend/src/pages/ProfileSetupModal.tsx",
+          "operation": "create",
+          "description": "Create profile setup modal component that appears when user logs in for the first time without a profile. Use authorization component's useGetCallerUserProfile hook to check profile existence and saveCallerUserProfile to save user name. Modal should block access to app content until name is provided. Style with arena theme using dark modal background and neon accent buttons. Follow authorization component's guidance to prevent modal flash by checking actorFetching and isFetched states."
+        },
+        {
+          "path": "frontend/src/hooks/useGetCallerUserProfile.ts",
+          "operation": "create",
+          "description": "Create React Query hook wrapping backend.getCallerUserProfile() following the authorization component's usage pattern. Return user profile with proper loading states that account for actor initialization. Prevent profile modal flash by exposing both actorFetching and query isFetched states. Use the authorization component's provided implementation as reference. Verify the authorization component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useSaveCallerUserProfile.ts",
+          "operation": "create",
+          "description": "Create React Query mutation hook that calls backend.saveCallerUserProfile(profile) to save user name. Invalidate 'currentUserProfile' query on success to refresh cached profile data. Handle mutation states and errors gracefully."
+        },
+        {
+          "path": "frontend/src/components/LoginButton.tsx",
+          "operation": "create",
+          "description": "Create login/logout button component following the authorization component's usage pattern. Use useInternetIdentity hook for authentication state and clear query cache on logout. Display 'Login', 'Logout', or 'Logging in...' text based on authentication state. Style with arena theme using neon accent for login state and gray for logout state. Verify the authorization component's usage instructions before implementing."
+        }
+      ]
+    }
+  ]
+}

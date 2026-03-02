@@ -1,0 +1,141 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Bebas+Neue&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+
+    /* Arena Dark Theme - Light mode (still dark-ish for brand consistency) */
+    --background: 0.12 0.005 260;
+    --foreground: 0.95 0.01 260;
+    --card: 0.16 0.008 260;
+    --card-foreground: 0.95 0.01 260;
+    --popover: 0.18 0.008 260;
+    --popover-foreground: 0.95 0.01 260;
+    --primary: 0.78 0.18 65;
+    --primary-foreground: 0.1 0.005 260;
+    --secondary: 0.22 0.01 260;
+    --secondary-foreground: 0.9 0.01 260;
+    --muted: 0.2 0.008 260;
+    --muted-foreground: 0.6 0.01 260;
+    --accent: 0.78 0.18 65;
+    --accent-foreground: 0.1 0.005 260;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+    --border: 0.28 0.01 260;
+    --input: 0.22 0.01 260;
+    --ring: 0.78 0.18 65;
+
+    /* Arena specific */
+    --neon: 0.78 0.18 65;
+    --neon-glow: 0.78 0.18 65;
+    --arena-surface: 0.16 0.008 260;
+    --arena-surface-2: 0.2 0.01 260;
+
+    --chart-1: 0.78 0.18 65;
+    --chart-2: 0.6 0.118 184.704;
+    --chart-3: 0.398 0.07 227.392;
+    --chart-4: 0.828 0.189 84.429;
+    --chart-5: 0.769 0.188 70.08;
+
+    --sidebar: 0.14 0.008 260;
+    --sidebar-foreground: 0.95 0.01 260;
+    --sidebar-primary: 0.78 0.18 65;
+    --sidebar-primary-foreground: 0.1 0.005 260;
+    --sidebar-accent: 0.22 0.01 260;
+    --sidebar-accent-foreground: 0.9 0.01 260;
+    --sidebar-border: 0.28 0.01 260;
+    --sidebar-ring: 0.78 0.18 65;
+  }
+
+  .dark {
+    --background: 0.1 0.005 260;
+    --foreground: 0.95 0.01 260;
+    --card: 0.14 0.008 260;
+    --card-foreground: 0.95 0.01 260;
+    --popover: 0.16 0.008 260;
+    --popover-foreground: 0.95 0.01 260;
+    --primary: 0.78 0.18 65;
+    --primary-foreground: 0.1 0.005 260;
+    --secondary: 0.2 0.01 260;
+    --secondary-foreground: 0.9 0.01 260;
+    --muted: 0.18 0.008 260;
+    --muted-foreground: 0.55 0.01 260;
+    --accent: 0.78 0.18 65;
+    --accent-foreground: 0.1 0.005 260;
+    --destructive: 0.704 0.191 22.216;
+    --destructive-foreground: 0.985 0 0;
+    --border: 0.25 0.01 260;
+    --input: 0.2 0.01 260;
+    --ring: 0.78 0.18 65;
+
+    --neon: 0.78 0.18 65;
+    --arena-surface: 0.14 0.008 260;
+    --arena-surface-2: 0.18 0.01 260;
+
+    --chart-1: 0.78 0.18 65;
+    --chart-2: 0.6 0.118 184.704;
+    --chart-3: 0.398 0.07 227.392;
+    --chart-4: 0.828 0.189 84.429;
+    --chart-5: 0.769 0.188 70.08;
+
+    --sidebar: 0.12 0.008 260;
+    --sidebar-foreground: 0.95 0.01 260;
+    --sidebar-primary: 0.78 0.18 65;
+    --sidebar-primary-foreground: 0.1 0.005 260;
+    --sidebar-accent: 0.2 0.01 260;
+    --sidebar-accent-foreground: 0.9 0.01 260;
+    --sidebar-border: 0.25 0.01 260;
+    --sidebar-ring: 0.78 0.18 65;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+  }
+}
+
+@layer utilities {
+  .neon-glow {
+    box-shadow: 0 0 12px oklch(0.78 0.18 65 / 0.5), 0 0 24px oklch(0.78 0.18 65 / 0.2);
+  }
+
+  .neon-glow-sm {
+    box-shadow: 0 0 6px oklch(0.78 0.18 65 / 0.4), 0 0 12px oklch(0.78 0.18 65 / 0.15);
+  }
+
+  .neon-text {
+    text-shadow: 0 0 10px oklch(0.78 0.18 65 / 0.8), 0 0 20px oklch(0.78 0.18 65 / 0.4);
+  }
+
+  .card-hover {
+    transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+  }
+
+  .card-hover:hover {
+    box-shadow: 0 0 16px oklch(0.78 0.18 65 / 0.35), 0 0 32px oklch(0.78 0.18 65 / 0.12);
+    transform: translateY(-2px);
+    border-color: oklch(0.78 0.18 65 / 0.5);
+  }
+
+  .arena-gradient {
+    background: linear-gradient(135deg, oklch(0.1 0.005 260) 0%, oklch(0.14 0.015 280) 50%, oklch(0.1 0.005 260) 100%);
+  }
+
+  .font-display {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.05em;
+  }
+}
