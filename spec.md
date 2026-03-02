@@ -1,14 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Build "The Arena," a dark-themed social platform on the Internet Computer where users can upload, discover, and play AI-generated music and video content.
+**Goal:** Add delete profile and delete content functionality to The Arena platform, with confirmation dialogs and owner-only access controls.
 
 **Planned changes:**
-- Motoko backend actor storing post metadata (title, description, file type, file blob, album cover blob, thumbnail blob, uploader principal, timestamp, like/comment counts) with `uploadContent`, `getFeed`, `getPost`, and `getUserPosts` calls
-- Responsive upload flow supporting MP3, WAV, MP4, WebM, and MOV files with optional album cover and thumbnail fields; all file reading done client-side
-- Thumbnail creation tool: video uploads show a scrubber with a "Capture Frame" button (canvas-based PNG export); audio uploads show an image upload field for thumbnail/album cover
-- Social discovery feed page with a responsive card grid showing thumbnail, title, uploader, file type badge, and like count
-- Detail/player page with HTML5 audio or video player; album cover displayed alongside audio tracks
-- Bold dark arena-style theme: near-black background, neon gold/orange accents, glowing card hover effects, modern bold sans-serif typography, consistent across all pages
+- Add a "Delete Profile" button in the authenticated user's profile area that opens a confirmation dialog before permanently deleting the profile, then logs the user out and redirects to the feed page.
+- Expose a backend `deleteProfile` endpoint that removes the caller's profile record.
+- Add a "Delete Content" button on content cards and/or the content detail page, visible only to the content owner, that opens a confirmation dialog before permanently deleting the content item.
+- Remove deleted content from the feed and related UI without a full page reload.
+- Expose a backend `deleteContent` endpoint that accepts a content ID and only allows deletion by the content owner.
 
-**User-visible outcome:** Users can upload AI music and video files to The Arena, browse a styled discovery feed, and play content directly in the browser with a high-energy dark stage aesthetic.
+**User-visible outcome:** Authenticated users can permanently delete their own profile or any of their own content items via confirmation dialogs, with the UI updating immediately after each deletion.

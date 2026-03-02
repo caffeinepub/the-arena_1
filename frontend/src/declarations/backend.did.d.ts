@@ -10,8 +10,17 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface Comment {
+  'id' : CommentId,
+  'contentId' : ContentId,
+  'text' : string,
+  'author' : Principal,
+  'timestamp' : bigint,
+}
+export type CommentId = bigint;
+export type ContentId = string;
 export interface ContentMetadata {
-  'id' : string,
+  'id' : ContentId,
   'title' : string,
   'contentBlob' : ExternalBlob,
   'views' : bigint,
@@ -66,19 +75,32 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'addComment' : ActorMethod<[ContentId, string], CommentId>,
+  'addToQueue' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'clearQueue' : ActorMethod<[], undefined>,
+  'deleteCallerUserProfile' : ActorMethod<[], undefined>,
+  'deleteComment' : ActorMethod<[ContentId, CommentId], undefined>,
+  'deleteContent' : ActorMethod<[string], undefined>,
   'getAllContent' : ActorMethod<[bigint, bigint], Array<ContentMetadata>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getComments' : ActorMethod<[ContentId], Array<Comment>>,
   'getContent' : ActorMethod<[string], ContentMetadata>,
   'getContentBySearchCriteria' : ActorMethod<
     [SearchCriteria, bigint, bigint],
     Array<ContentMetadata>
   >,
+  'getLikesCount' : ActorMethod<[ContentId], bigint>,
+  'getPlaybackQueue' : ActorMethod<[], Array<string>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'hasUserLikedContent' : ActorMethod<[ContentId, Principal], boolean>,
   'incrementViews' : ActorMethod<[string], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'moveItemInQueue' : ActorMethod<[bigint, bigint], undefined>,
+  'removeFromQueue' : ActorMethod<[bigint], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'toggleLike' : ActorMethod<[ContentId], undefined>,
   'uploadContent' : ActorMethod<
     [
       string,

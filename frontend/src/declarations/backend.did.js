@@ -19,6 +19,8 @@ export const _CaffeineStorageRefillResult = IDL.Record({
   'success' : IDL.Opt(IDL.Bool),
   'topped_up_amount' : IDL.Opt(IDL.Nat),
 });
+export const ContentId = IDL.Text;
+export const CommentId = IDL.Nat;
 export const UserRole = IDL.Variant({
   'admin' : IDL.Null,
   'user' : IDL.Null,
@@ -33,7 +35,7 @@ export const FileType = IDL.Variant({
   'videoMov' : IDL.Null,
 });
 export const ContentMetadata = IDL.Record({
-  'id' : IDL.Text,
+  'id' : ContentId,
   'title' : IDL.Text,
   'contentBlob' : ExternalBlob,
   'views' : IDL.Nat,
@@ -47,6 +49,13 @@ export const ContentMetadata = IDL.Record({
   'uploadTime' : IDL.Int,
 });
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
+export const Comment = IDL.Record({
+  'id' : CommentId,
+  'contentId' : ContentId,
+  'text' : IDL.Text,
+  'author' : IDL.Principal,
+  'timestamp' : IDL.Int,
+});
 export const SearchCriteria = IDL.Variant({
   'mostPopular' : IDL.Null,
   'byFileType' : FileType,
@@ -82,7 +91,13 @@ export const idlService = IDL.Service({
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'addComment' : IDL.Func([ContentId, IDL.Text], [CommentId], []),
+  'addToQueue' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'clearQueue' : IDL.Func([], [], []),
+  'deleteCallerUserProfile' : IDL.Func([], [], []),
+  'deleteComment' : IDL.Func([ContentId, CommentId], [], []),
+  'deleteContent' : IDL.Func([IDL.Text], [], []),
   'getAllContent' : IDL.Func(
       [IDL.Nat, IDL.Nat],
       [IDL.Vec(ContentMetadata)],
@@ -90,20 +105,31 @@ export const idlService = IDL.Service({
     ),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getComments' : IDL.Func([ContentId], [IDL.Vec(Comment)], ['query']),
   'getContent' : IDL.Func([IDL.Text], [ContentMetadata], ['query']),
   'getContentBySearchCriteria' : IDL.Func(
       [SearchCriteria, IDL.Nat, IDL.Nat],
       [IDL.Vec(ContentMetadata)],
       ['query'],
     ),
+  'getLikesCount' : IDL.Func([ContentId], [IDL.Nat], ['query']),
+  'getPlaybackQueue' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
+  'hasUserLikedContent' : IDL.Func(
+      [ContentId, IDL.Principal],
+      [IDL.Bool],
+      ['query'],
+    ),
   'incrementViews' : IDL.Func([IDL.Text], [], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'moveItemInQueue' : IDL.Func([IDL.Nat, IDL.Nat], [], []),
+  'removeFromQueue' : IDL.Func([IDL.Nat], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'toggleLike' : IDL.Func([ContentId], [], []),
   'uploadContent' : IDL.Func(
       [
         IDL.Text,
@@ -133,6 +159,8 @@ export const idlFactory = ({ IDL }) => {
     'success' : IDL.Opt(IDL.Bool),
     'topped_up_amount' : IDL.Opt(IDL.Nat),
   });
+  const ContentId = IDL.Text;
+  const CommentId = IDL.Nat;
   const UserRole = IDL.Variant({
     'admin' : IDL.Null,
     'user' : IDL.Null,
@@ -147,7 +175,7 @@ export const idlFactory = ({ IDL }) => {
     'videoMov' : IDL.Null,
   });
   const ContentMetadata = IDL.Record({
-    'id' : IDL.Text,
+    'id' : ContentId,
     'title' : IDL.Text,
     'contentBlob' : ExternalBlob,
     'views' : IDL.Nat,
@@ -161,6 +189,13 @@ export const idlFactory = ({ IDL }) => {
     'uploadTime' : IDL.Int,
   });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
+  const Comment = IDL.Record({
+    'id' : CommentId,
+    'contentId' : ContentId,
+    'text' : IDL.Text,
+    'author' : IDL.Principal,
+    'timestamp' : IDL.Int,
+  });
   const SearchCriteria = IDL.Variant({
     'mostPopular' : IDL.Null,
     'byFileType' : FileType,
@@ -196,7 +231,13 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'addComment' : IDL.Func([ContentId, IDL.Text], [CommentId], []),
+    'addToQueue' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'clearQueue' : IDL.Func([], [], []),
+    'deleteCallerUserProfile' : IDL.Func([], [], []),
+    'deleteComment' : IDL.Func([ContentId, CommentId], [], []),
+    'deleteContent' : IDL.Func([IDL.Text], [], []),
     'getAllContent' : IDL.Func(
         [IDL.Nat, IDL.Nat],
         [IDL.Vec(ContentMetadata)],
@@ -204,20 +245,31 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getComments' : IDL.Func([ContentId], [IDL.Vec(Comment)], ['query']),
     'getContent' : IDL.Func([IDL.Text], [ContentMetadata], ['query']),
     'getContentBySearchCriteria' : IDL.Func(
         [SearchCriteria, IDL.Nat, IDL.Nat],
         [IDL.Vec(ContentMetadata)],
         ['query'],
       ),
+    'getLikesCount' : IDL.Func([ContentId], [IDL.Nat], ['query']),
+    'getPlaybackQueue' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
+    'hasUserLikedContent' : IDL.Func(
+        [ContentId, IDL.Principal],
+        [IDL.Bool],
+        ['query'],
+      ),
     'incrementViews' : IDL.Func([IDL.Text], [], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'moveItemInQueue' : IDL.Func([IDL.Nat, IDL.Nat], [], []),
+    'removeFromQueue' : IDL.Func([IDL.Nat], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'toggleLike' : IDL.Func([ContentId], [], []),
     'uploadContent' : IDL.Func(
         [
           IDL.Text,

@@ -1,164 +1,222 @@
-import { useState, useEffect } from 'react';
-import { useGetAllContent } from '../hooks/useQueries';
-import { useActor } from '../hooks/useActor';
-import { type ContentMetadata, FileType } from '../backend';
+import React, { useState, useMemo } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { Music, Video, Layers, TrendingUp, Clock, Search } from 'lucide-react';
+import { useGetAllContent, useGetUserProfile } from '../hooks/useQueries';
+import { ContentMetadata, FileType } from '../backend';
 import ContentCard from '../components/ContentCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Music, Video, TrendingUp, Clock, Zap } from 'lucide-react';
 
-type FilterTab = 'all' | 'audio' | 'video';
+type FilterTab = 'all' | 'music' | 'video';
+type SortMode = 'recent' | 'popular';
 
-function ContentCardSkeleton() {
+function isAudioType(ft: FileType): boolean {
+  return ft === FileType.audioMp3 || ft === FileType.audioWav;
+}
+
+function isVideoType(ft: FileType): boolean {
+  return ft === FileType.videoMP4 || ft === FileType.videoWebM || ft === FileType.videoMov;
+}
+
+function ContentCardWithUploader({ content }: { content: ContentMetadata }) {
+  const { data: profile } = useGetUserProfile(content.uploader);
+  const uploaderName = profile?.name ?? content.uploader.toString().slice(0, 8) + '…';
+  return <ContentCard content={content} uploaderName={uploaderName} />;
+}
+
+function SkeletonCard() {
   return (
-    <div className="bg-card border border-arena-border rounded-lg overflow-hidden">
-      <Skeleton className="aspect-video w-full bg-arena-surface" />
+    <div className="bg-arena-surface border border-border rounded-xl overflow-hidden">
+      <Skeleton className="aspect-video w-full" />
       <div className="p-3 space-y-2">
-        <Skeleton className="h-4 w-3/4 bg-arena-surface" />
-        <Skeleton className="h-3 w-1/2 bg-arena-surface" />
-        <Skeleton className="h-3 w-1/3 bg-arena-surface" />
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-3 w-1/2" />
+        <Skeleton className="h-3 w-1/4" />
       </div>
     </div>
   );
 }
 
 export default function FeedPage() {
-  const { data: allContent, isLoading, error } = useGetAllContent(0, 50);
-  const { actor } = useActor();
-  const [uploaderNames, setUploaderNames] = useState<Record<string, string>>({});
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
+  const [sortMode, setSortMode] = useState<SortMode>('recent');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch uploader names
-  useEffect(() => {
-    if (!allContent || !actor) return;
+  const { data: allContent = [], isLoading } = useGetAllContent();
 
-    const uniquePrincipals = [...new Set(allContent.map((c) => c.uploader.toString()))];
-    const missing = uniquePrincipals.filter((p) => !(p in uploaderNames));
-    if (missing.length === 0) return;
+  const filteredContent = useMemo(() => {
+    let items = [...allContent];
 
-    missing.forEach(async (principalStr) => {
-      try {
-        const principal = allContent.find((c) => c.uploader.toString() === principalStr)?.uploader;
-        if (!principal) return;
-        const profile = await actor.getUserProfile(principal);
-        if (profile) {
-          setUploaderNames((prev) => ({ ...prev, [principalStr]: profile.name }));
-        } else {
-          setUploaderNames((prev) => ({
-            ...prev,
-            [principalStr]: `${principalStr.slice(0, 8)}...`,
-          }));
-        }
-      } catch {
-        // silently ignore
-      }
-    });
-  }, [allContent, actor]);
-
-  const filteredContent = (allContent ?? []).filter((c: ContentMetadata) => {
-    if (activeTab === 'audio') {
-      return c.fileType === FileType.audioMp3 || c.fileType === FileType.audioWav;
+    // Filter by tab
+    if (activeTab === 'music') {
+      items = items.filter((c) => isAudioType(c.fileType));
+    } else if (activeTab === 'video') {
+      items = items.filter((c) => isVideoType(c.fileType));
     }
-    if (activeTab === 'video') {
-      return c.fileType === FileType.videoMP4 || c.fileType === FileType.videoWebM || c.fileType === FileType.videoMov;
-    }
-    return true;
-  });
 
-  // Sort by upload time (newest first)
-  const sortedContent = [...filteredContent].sort((a, b) => Number(b.uploadTime - a.uploadTime));
+    // Filter by search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter(
+        (c) =>
+          c.title.toLowerCase().includes(q) ||
+          c.description.toLowerCase().includes(q)
+      );
+    }
+
+    // Sort
+    if (sortMode === 'recent') {
+      items.sort((a, b) => Number(b.uploadTime) - Number(a.uploadTime));
+    } else {
+      items.sort((a, b) => Number(b.views) - Number(a.views));
+    }
+
+    return items;
+  }, [allContent, activeTab, sortMode, searchQuery]);
+
+  const tabs: { id: FilterTab; label: string; icon: React.ReactNode }[] = [
+    { id: 'all', label: 'All', icon: <Layers className="w-4 h-4" /> },
+    { id: 'music', label: 'Music', icon: <Music className="w-4 h-4" /> },
+    { id: 'video', label: 'Video', icon: <Video className="w-4 h-4" /> },
+  ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Hero section */}
-      <div className="relative rounded-2xl overflow-hidden mb-10 border border-arena-border">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: 'url(/assets/generated/arena-hero-bg.dim_1440x600.png)' }}
+    <div className="min-h-screen">
+      {/* Hero Banner */}
+      <section className="relative w-full overflow-hidden" style={{ minHeight: '260px' }}>
+        <img
+          src="/assets/generated/arena-hero-bg.dim_1440x600.png"
+          alt="Arena"
+          className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
-        <div className="relative px-8 py-12 sm:py-16">
-          <div className="flex items-center gap-2 mb-3">
-            <Zap className="w-5 h-5 text-arena-neon" />
-            <span className="text-arena-neon text-sm font-bold uppercase tracking-widest">Live Now</span>
-          </div>
-          <h1 className="text-5xl sm:text-6xl font-display text-foreground mb-3 neon-text">
-            THE ARENA
-          </h1>
-          <p className="text-muted-foreground text-lg max-w-md">
-            Discover AI-generated music and video from creators around the world.
+        <div className="absolute inset-0 bg-gradient-to-b from-arena-dark/60 via-arena-dark/40 to-arena-dark" />
+        <div className="relative z-10 flex flex-col items-center justify-center h-full py-16 px-4 text-center">
+          <img
+            src="/assets/generated/arena-logo.dim_400x120.png"
+            alt="Arena"
+            className="h-16 mb-4 drop-shadow-lg"
+          />
+          <p className="text-muted-foreground text-base max-w-md">
+            Discover and share music &amp; videos from creators around the world.
           </p>
-          <div className="flex items-center gap-6 mt-6 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <Music className="w-4 h-4 text-arena-neon" />
-              {(allContent ?? []).filter(c => c.fileType === FileType.audioMp3 || c.fileType === FileType.audioWav).length} tracks
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Video className="w-4 h-4 text-blue-400" />
-              {(allContent ?? []).filter(c => c.fileType !== FileType.audioMp3 && c.fileType !== FileType.audioWav).length} videos
-            </span>
+          <button
+            onClick={() => navigate({ to: '/upload' })}
+            className="mt-6 bg-arena-neon text-arena-dark font-bold px-6 py-2.5 rounded-full hover:bg-arena-neon/90 transition-colors text-sm shadow-neon"
+          >
+            + Upload Content
+          </button>
+        </div>
+      </section>
+
+      {/* Controls */}
+      <div className="sticky top-[57px] z-20 bg-arena-dark/95 backdrop-blur border-b border-border px-4 py-3">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+          {/* Filter tabs */}
+          <div className="flex gap-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 text-sm px-4 py-1.5 rounded-full border transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-arena-neon text-arena-neon bg-arena-neon/10 font-semibold'
+                    : 'border-border text-muted-foreground hover:border-arena-neon/50 hover:text-foreground'
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-2 items-center w-full sm:w-auto">
+            {/* Search */}
+            <div className="relative flex-1 sm:w-48">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search…"
+                className="w-full bg-arena-surface border border-border rounded-full pl-8 pr-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-arena-neon/60"
+              />
+            </div>
+
+            {/* Sort */}
+            <div className="flex gap-1">
+              <button
+                onClick={() => setSortMode('recent')}
+                className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  sortMode === 'recent'
+                    ? 'border-arena-neon text-arena-neon bg-arena-neon/10'
+                    : 'border-border text-muted-foreground hover:border-arena-neon/50'
+                }`}
+              >
+                <Clock className="w-3 h-3" />
+                Recent
+              </button>
+              <button
+                onClick={() => setSortMode('popular')}
+                className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  sortMode === 'popular'
+                    ? 'border-arena-neon text-arena-neon bg-arena-neon/10'
+                    : 'border-border text-muted-foreground hover:border-arena-neon/50'
+                }`}
+              >
+                <TrendingUp className="w-3 h-3" />
+                Popular
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FilterTab)}>
-          <TabsList className="bg-arena-surface border border-arena-border">
-            <TabsTrigger value="all" className="data-[state=active]:bg-arena-neon data-[state=active]:text-arena-darker font-semibold">
-              All
-            </TabsTrigger>
-            <TabsTrigger value="audio" className="data-[state=active]:bg-arena-neon data-[state=active]:text-arena-darker font-semibold">
-              <Music className="w-3.5 h-3.5 mr-1.5" />
-              Music
-            </TabsTrigger>
-            <TabsTrigger value="video" className="data-[state=active]:bg-arena-neon data-[state=active]:text-arena-darker font-semibold">
-              <Video className="w-3.5 h-3.5 mr-1.5" />
-              Video
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Clock className="w-3.5 h-3.5" />
-          <span>Latest first</span>
-        </div>
-      </div>
-
-      {/* Content grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <ContentCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : error ? (
-        <div className="text-center py-20">
-          <p className="text-destructive font-semibold">Failed to load content. Please refresh.</p>
-        </div>
-      ) : sortedContent.length === 0 ? (
-        <div className="text-center py-20 space-y-4">
-          <div className="w-20 h-20 rounded-full bg-arena-surface border border-arena-border flex items-center justify-center mx-auto">
-            <TrendingUp className="w-9 h-9 text-muted-foreground" />
+      {/* Content Grid */}
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
           </div>
-          <h3 className="text-xl font-bold text-foreground">No content yet</h3>
-          <p className="text-muted-foreground max-w-sm mx-auto">
-            {activeTab !== 'all'
-              ? `No ${activeTab} content uploaded yet. Be the first!`
-              : 'The Arena is empty. Upload your first track or video to get started!'}
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {sortedContent.map((content) => (
-            <ContentCard
-              key={content.id}
-              content={content}
-              uploaderName={uploaderNames[content.uploader.toString()]}
-            />
-          ))}
-        </div>
-      )}
+        ) : filteredContent.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+            <div className="w-16 h-16 rounded-full bg-arena-surface flex items-center justify-center">
+              {activeTab === 'music' ? (
+                <Music className="w-8 h-8 text-muted-foreground" />
+              ) : activeTab === 'video' ? (
+                <Video className="w-8 h-8 text-muted-foreground" />
+              ) : (
+                <Layers className="w-8 h-8 text-muted-foreground" />
+              )}
+            </div>
+            <div>
+              <p className="text-foreground font-semibold">No content found</p>
+              <p className="text-muted-foreground text-sm mt-1">
+                {searchQuery
+                  ? 'Try a different search term.'
+                  : activeTab === 'music'
+                  ? 'No music uploaded yet. Be the first!'
+                  : activeTab === 'video'
+                  ? 'No videos uploaded yet. Be the first!'
+                  : 'No content uploaded yet. Be the first!'}
+              </p>
+            </div>
+            <button
+              onClick={() => navigate({ to: '/upload' })}
+              className="text-sm text-arena-neon border border-arena-neon/40 rounded-full px-4 py-2 hover:bg-arena-neon/10 transition-colors"
+            >
+              Upload Content
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredContent.map((content) => (
+              <ContentCardWithUploader key={content.id} content={content} />
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }

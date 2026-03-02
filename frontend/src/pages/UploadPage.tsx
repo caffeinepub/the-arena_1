@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useUploadContent } from '../hooks/useQueries';
@@ -10,232 +10,281 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Upload, Lock } from 'lucide-react';
-import { toast } from 'sonner';
+import { Upload, Music, Video, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 function detectFileType(file: File): FileType | null {
-  const name = file.name.toLowerCase();
   const mime = file.type.toLowerCase();
-  if (name.endsWith('.mp3') || mime === 'audio/mpeg') return FileType.audioMp3;
-  if (name.endsWith('.wav') || mime === 'audio/wav' || mime === 'audio/x-wav') return FileType.audioWav;
-  if (name.endsWith('.mp4') || mime === 'video/mp4') return FileType.videoMP4;
-  if (name.endsWith('.webm') || mime === 'video/webm') return FileType.videoWebM;
-  if (name.endsWith('.mov') || mime === 'video/quicktime') return FileType.videoMov;
+  const name = file.name.toLowerCase();
+
+  if (mime === 'audio/mpeg' || mime === 'audio/mp3' || name.endsWith('.mp3')) return FileType.audioMp3;
+  if (mime === 'audio/wav' || mime === 'audio/x-wav' || name.endsWith('.wav')) return FileType.audioWav;
+  // AAC mapped to audioMp3 as closest backend type
+  if (mime === 'audio/aac' || mime === 'audio/x-aac' || name.endsWith('.aac')) return FileType.audioMp3;
+  if (mime === 'video/mp4' || name.endsWith('.mp4')) return FileType.videoMP4;
+  if (mime === 'video/webm' || name.endsWith('.webm')) return FileType.videoWebM;
+  if (mime === 'video/quicktime' || name.endsWith('.mov')) return FileType.videoMov;
   return null;
 }
 
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+function isAudioFileType(ft: FileType): boolean {
+  return ft === FileType.audioMp3 || ft === FileType.audioWav;
 }
 
-async function fileToExternalBlob(file: File): Promise<Uint8Array<ArrayBuffer>> {
-  const buffer = await file.arrayBuffer();
-  return new Uint8Array(buffer as ArrayBuffer);
+async function fileToExternalBlob(
+  file: File,
+  onProgress?: (pct: number) => void
+): Promise<ExternalBlob> {
+  const buf = await file.arrayBuffer();
+  // Cast to ArrayBuffer to satisfy ExternalBlob.fromBytes type requirement
+  const bytes = new Uint8Array(buf as ArrayBuffer);
+  const blob = ExternalBlob.fromBytes(bytes);
+  if (onProgress) return blob.withUploadProgress(onProgress);
+  return blob;
 }
 
 export default function UploadPage() {
-  const navigate = useNavigate();
   const { identity } = useInternetIdentity();
-  const isAuthenticated = !!identity;
-  const { mutateAsync: uploadContent, isPending } = useUploadContent();
+  const navigate = useNavigate();
+  const uploadContent = useUploadContent();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [albumCoverFile, setAlbumCoverFile] = useState<File | null>(null);
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  // Store thumbnail as ArrayBuffer to avoid Uint8Array generic variance issues
+  const [thumbnailBuffer, setThumbnailBuffer] = useState<ArrayBuffer | null>(null);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [thumbProgress, setThumbProgress] = useState(0);
+  const [coverProgress, setCoverProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const detectedFileType = mediaFile ? detectFileType(mediaFile) : null;
-  const isAudio = detectedFileType === FileType.audioMp3 || detectedFileType === FileType.audioWav;
+  const isAudio = detectedFileType ? isAudioFileType(detectedFileType) : false;
 
-  const handleMediaChange = (file: File | null) => {
-    setMediaFile(file);
-    setThumbnailFile(null);
-    setAlbumCoverFile(null);
-  };
+  // ThumbnailCreator passes Uint8Array; store the underlying ArrayBuffer
+  const handleThumbnailCapture = useCallback((bytes: Uint8Array) => {
+    setThumbnailBuffer(bytes.buffer as ArrayBuffer);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!mediaFile || !detectedFileType || !title.trim()) return;
+    setError(null);
+
+    if (!mediaFile) { setError('Please select a media file.'); return; }
+    if (!title.trim()) { setError('Please enter a title.'); return; }
+    if (!detectedFileType) { setError('Unsupported file type. Please upload MP3, WAV, AAC, MP4, WebM, or MOV.'); return; }
 
     try {
       setUploadProgress(0);
+      const contentBlob = await fileToExternalBlob(mediaFile, (pct) => setUploadProgress(pct));
 
-      const contentBytes = await fileToExternalBlob(mediaFile);
-      const contentBlob = ExternalBlob.fromBytes(contentBytes).withUploadProgress((pct) => {
-        setUploadProgress(pct);
-      });
-
-      let thumbnailBlob: ExternalBlob | null = null;
-      if (thumbnailFile) {
-        const thumbBytes = await fileToExternalBlob(thumbnailFile);
-        thumbnailBlob = ExternalBlob.fromBytes(thumbBytes);
+      let thumbExternalBlob: ExternalBlob | null = null;
+      if (thumbnailBuffer) {
+        setThumbProgress(0);
+        const thumbBytes = new Uint8Array(thumbnailBuffer);
+        thumbExternalBlob = ExternalBlob.fromBytes(thumbBytes).withUploadProgress((pct) => setThumbProgress(pct));
       }
 
-      let albumCoverBlob: ExternalBlob | null = null;
+      let coverExternalBlob: ExternalBlob | null = null;
       if (albumCoverFile) {
-        const coverBytes = await fileToExternalBlob(albumCoverFile);
-        albumCoverBlob = ExternalBlob.fromBytes(coverBytes);
+        setCoverProgress(0);
+        coverExternalBlob = await fileToExternalBlob(albumCoverFile, (pct) => setCoverProgress(pct));
       }
 
-      await uploadContent({
-        id: generateId(),
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      await uploadContent.mutateAsync({
+        id,
         title: title.trim(),
         description: description.trim(),
         fileType: detectedFileType,
         contentBlob,
-        thumbnailBlob,
-        albumCoverBlob,
+        thumbnailBlob: thumbExternalBlob,
+        albumCoverBlob: coverExternalBlob,
       });
 
-      toast.success('Content uploaded to The Arena!');
-      navigate({ to: '/' });
-    } catch (err) {
-      console.error('Upload error:', err);
-      toast.error('Upload failed. Please try again.');
-      setUploadProgress(0);
+      setSuccess(true);
+      setTimeout(() => navigate({ to: '/' }), 1500);
+    } catch (err: any) {
+      setError(err?.message ?? 'Upload failed. Please try again.');
     }
   };
 
-  if (!isAuthenticated) {
+  if (!identity) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
-        <div className="w-20 h-20 rounded-full bg-arena-neon/10 border border-arena-neon/30 flex items-center justify-center mb-6 neon-glow-sm">
-          <Lock className="w-9 h-9 text-arena-neon" />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 px-4">
+        <div className="w-16 h-16 rounded-full bg-arena-surface flex items-center justify-center">
+          <Lock className="w-8 h-8 text-arena-neon" />
         </div>
-        <h2 className="text-2xl font-display text-arena-neon neon-text mb-3">LOGIN REQUIRED</h2>
-        <p className="text-muted-foreground max-w-sm">
-          You need to log in to upload content to The Arena. Click the Login button in the header to get started.
-        </p>
+        <div className="text-center">
+          <h2 className="text-2xl font-display text-foreground mb-2">Login Required</h2>
+          <p className="text-muted-foreground">You must be logged in to upload content.</p>
+        </div>
+        <Button
+          onClick={() => navigate({ to: '/' })}
+          variant="outline"
+          className="border-arena-neon text-arena-neon hover:bg-arena-neon hover:text-arena-dark"
+        >
+          Back to Feed
+        </Button>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 px-4">
+        <div className="w-16 h-16 rounded-full bg-arena-surface flex items-center justify-center">
+          <CheckCircle2 className="w-8 h-8 text-arena-neon" />
+        </div>
+        <div className="text-center">
+          <h2 className="text-2xl font-display text-foreground mb-2">Upload Successful!</h2>
+          <p className="text-muted-foreground">Redirecting to feed…</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-      {/* Hero */}
+    <div className="max-w-2xl mx-auto px-4 py-10">
       <div className="mb-8">
-        <h1 className="text-4xl font-display text-arena-neon neon-text mb-2">UPLOAD TO THE ARENA</h1>
-        <p className="text-muted-foreground">Share your AI-generated music and video with the world.</p>
+        <h1 className="text-3xl font-display text-foreground mb-1">Upload Content</h1>
+        <p className="text-muted-foreground text-sm">Share your music or video with the Arena community.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Media file */}
-        <div className="bg-card border border-arena-border rounded-xl p-5 space-y-4">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-arena-neon">Media File</h2>
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Media File */}
+        <div className="space-y-2">
+          <Label className="text-foreground font-semibold flex items-center gap-2">
+            <span className="flex gap-1">
+              <Music className="w-4 h-4 text-arena-neon" />
+              <Video className="w-4 h-4 text-arena-neon" />
+            </span>
+            Media File <span className="text-destructive">*</span>
+          </Label>
+          <p className="text-xs text-muted-foreground">Supported: MP3, WAV, AAC (audio) · MP4, WebM, MOV (video)</p>
           <FileUploadInput
-            category={mediaFile && !isAudio ? 'video' : 'audio'}
-            accept=".mp3,.wav,.mp4,.webm,.mov,audio/mpeg,audio/wav,audio/x-wav,video/mp4,video/webm,video/quicktime"
-            label="Audio or Video File"
-            hint="Supported: MP3, WAV, MP4, WebM, MOV"
-            value={mediaFile}
-            onChange={handleMediaChange}
-            required
+            file={mediaFile}
+            onFileChange={setMediaFile}
+            accept=".mp3,.wav,.aac,.mp4,.webm,.mov,audio/mpeg,audio/wav,audio/x-wav,audio/aac,video/mp4,video/webm,video/quicktime"
+            category="media"
+            label="Drop your audio or video file here"
           />
-          {mediaFile && !detectedFileType && (
-            <p className="text-xs text-destructive">
-              Unsupported file type. Please use MP3, WAV, MP4, WebM, or MOV.
+          {mediaFile && detectedFileType === null && (
+            <p className="text-xs text-destructive flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" /> Unsupported file type.
             </p>
           )}
-          {detectedFileType && (
-            <p className="text-xs text-arena-neon font-semibold">
-              ✓ Detected: {detectedFileType}
+          {mediaFile && detectedFileType && (
+            <p className="text-xs text-arena-neon">
+              Detected: {isAudio ? '🎵 Audio' : '🎬 Video'} ({detectedFileType})
             </p>
+          )}
+          {uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Uploading media… {uploadProgress}%</p>
+              <Progress value={uploadProgress} className="h-1" />
+            </div>
           )}
         </div>
 
-        {/* Metadata */}
-        <div className="bg-card border border-arena-border rounded-xl p-5 space-y-4">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-arena-neon">Details</h2>
-
-          <div className="space-y-2">
-            <Label htmlFor="title" className="text-foreground font-semibold">
-              Title <span className="text-arena-neon">*</span>
-            </Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Give your track or video a name..."
-              className="bg-muted border-arena-border focus:border-arena-neon text-foreground placeholder:text-muted-foreground"
-              maxLength={100}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-foreground font-semibold">
-              Description
-            </Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Tell the world about your creation..."
-              className="bg-muted border-arena-border focus:border-arena-neon text-foreground placeholder:text-muted-foreground resize-none"
-              rows={3}
-              maxLength={500}
-            />
-          </div>
+        {/* Title */}
+        <div className="space-y-2">
+          <Label htmlFor="title" className="text-foreground font-semibold">
+            Title <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={isAudio ? 'Song or album title…' : 'Video title…'}
+            className="bg-arena-surface border-border text-foreground placeholder:text-muted-foreground"
+            maxLength={120}
+          />
         </div>
 
-        {/* Album cover (audio only) */}
-        {isAudio && (
-          <div className="bg-card border border-arena-border rounded-xl p-5 space-y-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-arena-neon">Album Cover</h2>
-            <FileUploadInput
-              category="image"
-              accept="image/png,image/jpeg,image/webp"
-              label="Album Cover Image"
-              hint="PNG, JPG, or WebP — recommended 1:1 ratio"
-              value={albumCoverFile}
-              onChange={setAlbumCoverFile}
-            />
-          </div>
-        )}
+        {/* Description */}
+        <div className="space-y-2">
+          <Label htmlFor="description" className="text-foreground font-semibold">
+            Description
+          </Label>
+          <Textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={isAudio ? 'About this track…' : 'About this video…'}
+            className="bg-arena-surface border-border text-foreground placeholder:text-muted-foreground resize-none"
+            rows={3}
+            maxLength={500}
+          />
+        </div>
 
         {/* Thumbnail */}
-        {detectedFileType && (
-          <div className="bg-card border border-arena-border rounded-xl p-5 space-y-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-arena-neon">
-              Thumbnail
-            </h2>
+        {mediaFile && detectedFileType && (
+          <div className="space-y-2">
+            <Label className="text-foreground font-semibold">
+              Thumbnail {isAudio ? '(Album Art)' : '(Video Thumbnail)'}
+            </Label>
             <ThumbnailCreator
-              fileType={detectedFileType}
               mediaFile={mediaFile}
-              onThumbnailChange={setThumbnailFile}
+              isAudio={isAudio}
+              onThumbnailCapture={handleThumbnailCapture}
             />
+            {thumbProgress > 0 && thumbProgress < 100 && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Uploading thumbnail… {thumbProgress}%</p>
+                <Progress value={thumbProgress} className="h-1" />
+              </div>
+            )}
           </div>
         )}
 
-        {/* Upload progress */}
-        {isPending && uploadProgress > 0 && (
+        {/* Album Cover (audio only) */}
+        {isAudio && (
           <div className="space-y-2">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Uploading to The Arena...</span>
-              <span>{uploadProgress}%</span>
-            </div>
-            <Progress value={uploadProgress} className="h-2" />
+            <Label className="text-foreground font-semibold">Album Cover (optional)</Label>
+            <p className="text-xs text-muted-foreground">Upload a separate high-res album cover image.</p>
+            <FileUploadInput
+              file={albumCoverFile}
+              onFileChange={setAlbumCoverFile}
+              accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+              category="image"
+              label="Drop album cover image here"
+            />
+            {coverProgress > 0 && coverProgress < 100 && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Uploading cover… {coverProgress}%</p>
+                <Progress value={coverProgress} className="h-1" />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-3">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            {error}
           </div>
         )}
 
         {/* Submit */}
         <Button
           type="submit"
-          disabled={isPending || !mediaFile || !detectedFileType || !title.trim()}
-          className="w-full bg-arena-neon text-arena-darker font-bold text-base py-6 hover:bg-arena-neon-bright neon-glow disabled:opacity-50 disabled:neon-glow-sm transition-all"
+          disabled={uploadContent.isPending || !mediaFile || !title.trim()}
+          className="w-full bg-arena-neon text-arena-dark font-bold hover:bg-arena-neon/90 disabled:opacity-50 h-12 text-base"
         >
-          {isPending ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              Uploading...
-            </>
+          {uploadContent.isPending ? (
+            <span className="flex items-center gap-2">
+              <span className="w-4 h-4 border-2 border-arena-dark border-t-transparent rounded-full animate-spin" />
+              Uploading…
+            </span>
           ) : (
-            <>
-              <Upload className="w-5 h-5 mr-2" />
-              Upload to The Arena
-            </>
+            <span className="flex items-center gap-2">
+              <Upload className="w-5 h-5" />
+              Publish to Arena
+            </span>
           )}
         </Button>
       </form>

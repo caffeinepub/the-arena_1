@@ -15,7 +15,7 @@ export class ExternalBlob {
     withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
 export interface ContentMetadata {
-    id: string;
+    id: ContentId;
     title: string;
     contentBlob: ExternalBlob;
     views: bigint;
@@ -27,6 +27,15 @@ export interface ContentMetadata {
     uploader: Principal;
     comments: bigint;
     uploadTime: bigint;
+}
+export type ContentId = string;
+export type CommentId = bigint;
+export interface Comment {
+    id: CommentId;
+    contentId: ContentId;
+    text: string;
+    author: Principal;
+    timestamp: bigint;
 }
 export type SearchCriteria = {
     __kind__: "mostPopular";
@@ -57,15 +66,28 @@ export enum UserRole {
     guest = "guest"
 }
 export interface backendInterface {
+    addComment(contentId: ContentId, text: string): Promise<CommentId>;
+    addToQueue(contentId: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    clearQueue(): Promise<void>;
+    deleteCallerUserProfile(): Promise<void>;
+    deleteComment(contentId: ContentId, commentId: CommentId): Promise<void>;
+    deleteContent(id: string): Promise<void>;
     getAllContent(_start: bigint, _limit: bigint): Promise<Array<ContentMetadata>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getComments(contentId: ContentId): Promise<Array<Comment>>;
     getContent(id: string): Promise<ContentMetadata>;
     getContentBySearchCriteria(criteria: SearchCriteria, _start: bigint, _limit: bigint): Promise<Array<ContentMetadata>>;
+    getLikesCount(contentId: ContentId): Promise<bigint>;
+    getPlaybackQueue(): Promise<Array<string>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    hasUserLikedContent(contentId: ContentId, user: Principal): Promise<boolean>;
     incrementViews(id: string): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
+    moveItemInQueue(fromIndex: bigint, toIndex: bigint): Promise<void>;
+    removeFromQueue(index: bigint): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    toggleLike(contentId: ContentId): Promise<void>;
     uploadContent(id: string, title: string, description: string, fileType: FileType, contentBlob: ExternalBlob, thumbnailBlob: ExternalBlob | null, albumCoverBlob: ExternalBlob | null): Promise<void>;
 }

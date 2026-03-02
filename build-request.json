@@ -1,132 +1,62 @@
 {
   "kind": "build_request",
-  "title": "The Arena – AI Music & Video Social Platform",
+  "title": "Add delete profile and delete content options",
   "projectName": "The Arena",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Create a Motoko backend actor that stores user-uploaded content metadata, including: title, description, file type (mp3, wav, video), file data as Blob, album cover image Blob (optional), thumbnail image Blob (optional), uploader principal, upload timestamp, and like/comment counts. Expose update calls for uploading content and query calls for fetching the feed, fetching a single post, and fetching posts by a specific user.",
-      "target": "backend",
+      "text": "Add a 'Delete Profile' option to the user's profile area that allows an authenticated user to permanently delete their profile from the platform. The action must prompt the user with a confirmation dialog before proceeding. Upon successful deletion, the user should be logged out and redirected to the feed page.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-2"
+          "msg-4"
         ],
         "quotes": [
-          "upload any file mp3 and wav",
-          "option to upload album cover and create thumbnail"
+          "Add delete profile option"
         ]
       },
       "acceptanceCriteria": [
-        "Backend stores title, description, fileType, fileBlob, albumCoverBlob, thumbnailBlob, uploaderPrincipal, timestamp, likesCount, commentsCount per post",
-        "uploadContent update call accepts all metadata fields and returns a post ID",
-        "getFeed query returns a paginated array of post metadata (without full blob data for listing efficiency)",
-        "getPost query returns full post data including blobs by ID",
-        "getUserPosts query returns posts filtered by principal"
+        "A 'Delete Profile' button is visible to the authenticated user in the profile area.",
+        "Clicking 'Delete Profile' opens a confirmation dialog warning the user that the action is irreversible.",
+        "Confirming deletion calls the backend to remove the user's profile data.",
+        "After successful deletion, the user is logged out and redirected to the feed page.",
+        "The backend exposes a deleteProfile endpoint that removes the caller's profile record."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Build a content upload flow that supports MP3, WAV, and common video formats (MP4, WebM, MOV). The upload UI must work responsively on both mobile and desktop. Users must be able to: select an audio or video file, optionally upload an album cover image, and optionally create or upload a thumbnail. All file reading should happen client-side before sending to the backend.",
+      "text": "Add an optional 'Delete Content' button to each content item that the authenticated user owns. The button should only be visible to the content owner. Clicking it must show a confirmation dialog before permanently deleting the content item. After deletion, the content item should be removed from the feed.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-2"
+          "msg-4"
         ],
         "quotes": [
-          "upload any file mp3 and wav for any device",
-          "option to upload album cover and create thumbnail"
+          "delete content optional button"
         ]
       },
       "acceptanceCriteria": [
-        "File picker accepts .mp3, .wav, .mp4, .webm, .mov extensions",
-        "Album cover upload field accepts image files (PNG, JPG, WebP)",
-        "Thumbnail section allows either uploading an image or capturing a frame from a video preview",
-        "Upload form renders correctly on mobile viewport (≤ 768px) and desktop",
-        "File content is converted to a Uint8Array/Blob and submitted to the backend uploadContent call"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Create a social media discovery feed page that displays uploaded AI music and video content as cards. Each card must show the thumbnail or album cover, title, uploader name (derived from principal), file type badge, and like count. Clicking a card opens a detail/player view where audio and video files can be played directly in the browser.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-2"
-        ],
-        "quotes": [
-          "social media platform for ai music and video content"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Feed page renders a responsive grid of content cards",
-        "Each card displays thumbnail/album cover, title, uploader, file type badge, and like count",
-        "Audio files render an HTML5 audio player on the detail page",
-        "Video files render an HTML5 video player on the detail page",
-        "Detail page displays album cover for audio tracks alongside the player"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Implement a thumbnail creation tool in the upload flow. For video uploads, display a scrubber that lets the user seek through a video preview and capture a specific frame as the thumbnail. For audio uploads, allow the user to upload a custom image as the thumbnail/album cover. The generated or selected thumbnail should be previewed before submission.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-2"
-        ],
-        "quotes": [
-          "create thumbnail"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Video upload shows a video preview with a time scrubber",
-        "A 'Capture Frame' button exports the current video frame as a PNG thumbnail using a canvas element",
-        "Captured thumbnail is shown as a preview image before the user submits the form",
-        "Audio upload shows an image upload field labeled 'Thumbnail / Album Cover'",
-        "Selected/captured thumbnail image is included in the backend upload call"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Apply a bold, dark arena-style visual theme throughout the application. Use a dark charcoal/near-black background, vivid neon accent colors (e.g., electric gold or neon orange), strong typographic hierarchy with a modern sans-serif font, and glowing card hover effects. The aesthetic should feel like a high-energy performance stage or music venue, consistent across all pages and components.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-2"
-        ],
-        "quotes": [
-          "the arena"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Global background is dark (charcoal or near-black)",
-        "Primary accent color is a vivid neon gold or orange applied to buttons, badges, and highlights",
-        "Cards have a subtle glow or border effect on hover",
-        "Typography uses a bold, modern sans-serif font",
-        "Theme is consistent across the feed, upload, and detail pages"
+        "A 'Delete Content' button is rendered on content cards and/or the content detail page only when the authenticated user is the content owner.",
+        "Clicking 'Delete Content' opens a confirmation dialog before any deletion occurs.",
+        "Confirming deletion calls the backend to permanently remove the content item.",
+        "After successful deletion, the content is removed from the feed and any related UI (e.g., queue, detail page) without requiring a full page reload.",
+        "The backend exposes a deleteContent endpoint that accepts a content ID and only allows deletion by the content owner."
       ]
     }
   ],
   "constraints": [
-    "App name must display as 'The Arena' in all user-facing UI",
-    "Do not use any external storage or cloud services — all file blobs must be stored in the Motoko backend canister",
-    "Do not integrate third-party authentication — use Internet Identity if login is needed",
-    "All file reading and thumbnail generation must happen client-side"
+    "Delete profile and delete content actions must only be available to the authenticated content/profile owner.",
+    "Both destructive actions must require explicit user confirmation before executing.",
+    "Do not edit any files listed under frontend.immutablePaths."
   ],
   "nonGoals": [
-    "Real-time features such as live streaming or WebSocket-based notifications",
-    "Direct messaging or chat between users",
-    "Payment or monetization features",
-    "AI generation of music or video within the app",
-    "External social media sharing integrations"
+    "Bulk deletion of multiple content items at once.",
+    "Admin-level deletion of other users' profiles or content.",
+    "Soft-delete or archiving — deletions are permanent."
   ],
   "imageRequirements": {
-    "required": [
-      "Dark arena stage wordmark logo with bold glowing lettering and a spotlight or stage motif (arena-logo.dim_400x120.png)",
-      "Abstract dark background with subtle neon light rays and crowd silhouette for hero/landing sections (arena-hero-bg.dim_1440x600.png)",
-      "Default placeholder thumbnail for audio tracks — dark music note icon on deep charcoal (default-audio-thumb.dim_400x400.png)",
-      "Default placeholder thumbnail for video content — dark play button icon on deep charcoal (default-video-thumb.dim_400x400.png)"
-    ],
+    "required": [],
     "edits": []
   }
 }

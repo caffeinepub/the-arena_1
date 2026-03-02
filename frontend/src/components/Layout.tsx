@@ -1,9 +1,23 @@
-import { Link, useLocation } from '@tanstack/react-router';
-import { Upload, Tv2, Heart } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useLocation, useRouterState } from '@tanstack/react-router';
+import { Upload, Tv2, Heart, ListMusic } from 'lucide-react';
 import LoginButton from './LoginButton';
+import ProfileMenu from './ProfileMenu';
+import QueuePanel from './QueuePanel';
+import { useGetPlaybackQueue } from '../hooks/useQueries';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const [queueOpen, setQueueOpen] = useState(false);
+  const { data: queue = [] } = useGetPlaybackQueue();
+  const { identity } = useInternetIdentity();
+
+  // Extract currently playing content ID from the route if on a content detail page
+  const routerState = useRouterState();
+  const currentPath = routerState.location.pathname;
+  const contentDetailMatch = currentPath.match(/^\/content\/(.+)$/);
+  const currentlyPlayingContentId = contentDetailMatch ? contentDetailMatch[1] : undefined;
 
   const navLinks = [
     { to: '/', label: 'Feed', icon: <Tv2 className="w-4 h-4" /> },
@@ -58,9 +72,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               })}
             </nav>
 
-            {/* Auth */}
-            <div className="flex items-center gap-3">
-              <LoginButton />
+            {/* Auth + Queue */}
+            <div className="flex items-center gap-2">
+              {/* Queue button */}
+              <button
+                onClick={() => setQueueOpen(true)}
+                className="relative p-2 rounded-md text-muted-foreground hover:text-arena-neon hover:bg-arena-neon/10 transition-all duration-200 group"
+                aria-label="Open playback queue"
+                title="Playback Queue"
+              >
+                <ListMusic className="w-5 h-5 group-hover:drop-shadow-[0_0_6px_rgba(212,175,55,0.8)] transition-all" />
+                {queue.length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-arena-neon text-arena-darker text-[10px] font-bold rounded-full px-1 leading-none">
+                    {queue.length > 99 ? '99+' : queue.length}
+                  </span>
+                )}
+              </button>
+              {identity ? <ProfileMenu /> : <LoginButton />}
             </div>
           </div>
         </div>
@@ -85,6 +113,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+            {/* Mobile queue button */}
+            <button
+              onClick={() => setQueueOpen(true)}
+              className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold text-muted-foreground relative"
+              aria-label="Open queue"
+            >
+              <ListMusic className="w-4 h-4" />
+              Queue
+              {queue.length > 0 && (
+                <span className="absolute top-1.5 right-1/4 min-w-[16px] h-[16px] flex items-center justify-center bg-arena-neon text-arena-darker text-[9px] font-bold rounded-full px-0.5">
+                  {queue.length > 9 ? '9+' : queue.length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </header>
@@ -116,6 +158,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </footer>
+
+      {/* Queue Panel */}
+      <QueuePanel
+        isOpen={queueOpen}
+        onClose={() => setQueueOpen(false)}
+        currentlyPlayingContentId={currentlyPlayingContentId}
+      />
     </div>
   );
 }

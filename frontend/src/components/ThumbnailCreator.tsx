@@ -1,202 +1,213 @@
-import { useRef, useState, useEffect } from 'react';
-import { FileType } from '../backend';
-import { Camera, Upload, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { Image, Camera, Upload, X, Check } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
-import FileUploadInput from './FileUploadInput';
+import { Button } from '@/components/ui/button';
 import { captureVideoFrame } from '../utils/videoFrameCapture';
-import { toast } from 'sonner';
 
 interface ThumbnailCreatorProps {
-  fileType: FileType;
-  mediaFile: File | null;
-  onThumbnailChange: (file: File | null) => void;
+  mediaFile: File;
+  isAudio: boolean;
+  onThumbnailCapture: (bytes: Uint8Array) => void;
 }
 
-export default function ThumbnailCreator({ fileType, mediaFile, onThumbnailChange }: ThumbnailCreatorProps) {
-  const isAudio = fileType === FileType.audioMp3 || fileType === FileType.audioWav;
+export default function ThumbnailCreator({ mediaFile, isAudio, onThumbnailCapture }: ThumbnailCreatorProps) {
+  const [mode, setMode] = useState<'capture' | 'upload'>('capture');
+  const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [seekTime, setSeekTime] = useState(0);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [captured, setCaptured] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Create object URL for video preview
+  // For audio, default to upload mode
+  useEffect(() => {
+    if (isAudio) {
+      setMode('upload');
+    } else {
+      setMode('capture');
+    }
+    setPreviewUrl(null);
+    setCaptured(false);
+  }, [isAudio, mediaFile]);
+
+  // Load video source for frame capture
   useEffect(() => {
     if (!isAudio && mediaFile) {
       const url = URL.createObjectURL(mediaFile);
-      setVideoUrl(url);
+      setVideoSrc(url);
       return () => URL.revokeObjectURL(url);
     }
-  }, [mediaFile, isAudio]);
+  }, [isAudio, mediaFile]);
 
-  const handleVideoLoaded = () => {
+  const handleVideoLoaded = useCallback(() => {
     if (videoRef.current) {
-      setDuration(videoRef.current.duration || 0);
+      setVideoDuration(videoRef.current.duration || 0);
     }
-  };
+  }, []);
 
-  const handleScrub = (value: number[]) => {
-    const time = value[0];
-    setCurrentTime(time);
+  const handleSeek = useCallback((value: number[]) => {
+    const t = value[0];
+    setSeekTime(t);
     if (videoRef.current) {
-      videoRef.current.currentTime = time;
+      videoRef.current.currentTime = t;
     }
-  };
+  }, []);
 
-  const handleCapture = async () => {
+  const handleCapture = useCallback(async () => {
     if (!videoRef.current) return;
     try {
       const blob = await captureVideoFrame(videoRef.current);
-      const file = new File([blob], 'thumbnail.png', { type: 'image/png' });
-      setThumbnailFile(file);
-      onThumbnailChange(file);
-      const previewUrl = URL.createObjectURL(blob);
-      setThumbnailPreview(previewUrl);
-      toast.success('Thumbnail captured!');
+      const arrayBuffer = await blob.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer as ArrayBuffer);
+      onThumbnailCapture(bytes);
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      setCaptured(true);
     } catch {
-      toast.error('Failed to capture frame. Try seeking to a different position.');
+      // ignore
     }
-  };
+  }, [onThumbnailCapture]);
 
-  const handleImageUpload = (file: File | null) => {
-    setThumbnailFile(file);
-    onThumbnailChange(file);
-    if (file) {
+  const handleImageUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer as ArrayBuffer);
+      onThumbnailCapture(bytes);
       const url = URL.createObjectURL(file);
-      setThumbnailPreview(url);
-    } else {
-      setThumbnailPreview(null);
-    }
-  };
+      setPreviewUrl(url);
+      setCaptured(true);
+      e.target.value = '';
+    },
+    [onThumbnailCapture]
+  );
 
-  const clearThumbnail = () => {
-    setThumbnailFile(null);
-    setThumbnailPreview(null);
-    onThumbnailChange(null);
-  };
+  const handleClearPreview = useCallback(() => {
+    setPreviewUrl(null);
+    setCaptured(false);
+  }, []);
 
-  if (isAudio) {
-    return (
-      <div className="space-y-4">
-        <FileUploadInput
-          category="image"
-          accept="image/png,image/jpeg,image/webp"
-          label="Thumbnail / Album Cover"
-          hint="PNG, JPG, or WebP — recommended 1:1 ratio"
-          value={thumbnailFile}
-          onChange={handleImageUpload}
-        />
-        {thumbnailPreview && (
-          <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-arena-border">
-            <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
-            <button
-              type="button"
-              onClick={clearThumbnail}
-              className="absolute top-1 right-1 p-0.5 rounded-full bg-black/70 text-white hover:bg-black"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Video thumbnail creator
   return (
-    <div className="space-y-4">
-      <label className="block text-sm font-semibold text-foreground">
-        Thumbnail
-        <span className="text-muted-foreground font-normal ml-2">(optional)</span>
-      </label>
+    <div className="bg-arena-surface/50 border border-border rounded-xl p-4 space-y-4">
+      {/* Mode tabs — only show for video */}
+      {!isAudio && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMode('capture')}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              mode === 'capture'
+                ? 'border-arena-neon text-arena-neon bg-arena-neon/10'
+                : 'border-border text-muted-foreground hover:border-arena-neon/50'
+            }`}
+          >
+            <Camera className="w-3.5 h-3.5" />
+            Capture Frame
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('upload')}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              mode === 'upload'
+                ? 'border-arena-neon text-arena-neon bg-arena-neon/10'
+                : 'border-border text-muted-foreground hover:border-arena-neon/50'
+            }`}
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Upload Image
+          </button>
+        </div>
+      )}
 
-      {videoUrl && mediaFile ? (
+      {/* Audio label */}
+      {isAudio && (
+        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <Image className="w-3.5 h-3.5 text-arena-neon" />
+          Upload a thumbnail image for this track (optional)
+        </p>
+      )}
+
+      {/* Video frame capture */}
+      {!isAudio && mode === 'capture' && videoSrc && (
         <div className="space-y-3">
-          {/* Video preview */}
-          <div className="relative rounded-lg overflow-hidden bg-black border border-arena-border">
-            <video
-              ref={videoRef}
-              src={videoUrl}
-              className="w-full max-h-48 object-contain"
-              onLoadedMetadata={handleVideoLoaded}
-              muted
-              playsInline
-            />
-          </div>
-
-          {/* Scrubber */}
-          {duration > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Seek to frame</span>
-                <span>{currentTime.toFixed(1)}s / {duration.toFixed(1)}s</span>
-              </div>
+          <video
+            ref={videoRef}
+            src={videoSrc}
+            onLoadedMetadata={handleVideoLoaded}
+            className="w-full rounded-lg max-h-48 object-contain bg-black"
+            muted
+            playsInline
+          />
+          {videoDuration > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">
+                Seek to frame: {seekTime.toFixed(1)}s / {videoDuration.toFixed(1)}s
+              </p>
               <Slider
                 min={0}
-                max={duration}
+                max={videoDuration}
                 step={0.1}
-                value={[currentTime]}
-                onValueChange={handleScrub}
+                value={[seekTime]}
+                onValueChange={handleSeek}
                 className="w-full"
               />
             </div>
           )}
-
-          {/* Capture button */}
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              onClick={handleCapture}
-              variant="outline"
-              size="sm"
-              className="border-arena-neon/40 text-arena-neon hover:bg-arena-neon/10 hover:border-arena-neon"
-            >
-              <Camera className="w-4 h-4 mr-2" />
-              Capture Frame
-            </Button>
-            <span className="text-xs text-muted-foreground">or</span>
-            <label className="cursor-pointer">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border rounded-md text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors">
-                <Upload className="w-3.5 h-3.5" />
-                Upload image
-              </span>
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] ?? null;
-                  handleImageUpload(file);
-                }}
-              />
-            </label>
-          </div>
-        </div>
-      ) : (
-        <div className="p-4 bg-arena-surface border border-dashed border-arena-border rounded-lg text-center text-sm text-muted-foreground">
-          Select a video file above to enable thumbnail capture
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleCapture}
+            className="bg-arena-neon text-arena-dark hover:bg-arena-neon/90 text-xs"
+          >
+            <Camera className="w-3.5 h-3.5 mr-1.5" />
+            Capture This Frame
+          </Button>
         </div>
       )}
 
-      {/* Thumbnail preview */}
-      {thumbnailPreview && (
-        <div className="flex items-center gap-3">
-          <div className="relative w-24 h-14 rounded overflow-hidden border border-arena-neon/30">
-            <img src={thumbnailPreview} alt="Thumbnail" className="w-full h-full object-cover" />
-          </div>
-          <div className="flex-1">
-            <p className="text-xs font-semibold text-arena-neon">Thumbnail set</p>
-            <p className="text-xs text-muted-foreground">{thumbnailFile?.name}</p>
-          </div>
+      {/* Image upload */}
+      {(isAudio || mode === 'upload') && (
+        <div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
           <button
             type="button"
-            onClick={clearThumbnail}
-            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 text-xs text-arena-neon border border-arena-neon/40 rounded-lg px-4 py-2 hover:bg-arena-neon/10 transition-colors"
           >
-            <X className="w-4 h-4" />
+            <Upload className="w-3.5 h-3.5" />
+            {isAudio ? 'Upload Thumbnail Image' : 'Upload Custom Thumbnail'}
           </button>
+        </div>
+      )}
+
+      {/* Preview */}
+      {previewUrl && (
+        <div className="relative inline-block">
+          <img
+            src={previewUrl}
+            alt="Thumbnail preview"
+            className="w-32 h-32 object-cover rounded-lg border border-arena-neon/40"
+          />
+          <div className="absolute top-1 right-1 flex gap-1">
+            <span className="bg-arena-neon/90 text-arena-dark rounded-full p-0.5">
+              <Check className="w-3 h-3" />
+            </span>
+            <button
+              type="button"
+              onClick={handleClearPreview}
+              className="bg-black/70 text-white rounded-full p-0.5 hover:bg-destructive/80 transition-colors"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       )}
     </div>

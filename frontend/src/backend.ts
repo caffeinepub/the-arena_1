@@ -94,7 +94,7 @@ export interface _CaffeineStorageRefillResult {
     topped_up_amount?: bigint;
 }
 export interface ContentMetadata {
-    id: string;
+    id: ContentId;
     title: string;
     contentBlob: ExternalBlob;
     views: bigint;
@@ -106,6 +106,15 @@ export interface ContentMetadata {
     uploader: Principal;
     comments: bigint;
     uploadTime: bigint;
+}
+export type ContentId = string;
+export type CommentId = bigint;
+export interface Comment {
+    id: CommentId;
+    contentId: ContentId;
+    text: string;
+    author: Principal;
+    timestamp: bigint;
 }
 export type SearchCriteria = {
     __kind__: "mostPopular";
@@ -150,19 +159,32 @@ export interface backendInterface {
     _caffeineStorageRefillCashier(refillInformation: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult>;
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
+    addComment(contentId: ContentId, text: string): Promise<CommentId>;
+    addToQueue(contentId: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    clearQueue(): Promise<void>;
+    deleteCallerUserProfile(): Promise<void>;
+    deleteComment(contentId: ContentId, commentId: CommentId): Promise<void>;
+    deleteContent(id: string): Promise<void>;
     getAllContent(_start: bigint, _limit: bigint): Promise<Array<ContentMetadata>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getComments(contentId: ContentId): Promise<Array<Comment>>;
     getContent(id: string): Promise<ContentMetadata>;
     getContentBySearchCriteria(criteria: SearchCriteria, _start: bigint, _limit: bigint): Promise<Array<ContentMetadata>>;
+    getLikesCount(contentId: ContentId): Promise<bigint>;
+    getPlaybackQueue(): Promise<Array<string>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    hasUserLikedContent(contentId: ContentId, user: Principal): Promise<boolean>;
     incrementViews(id: string): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
+    moveItemInQueue(fromIndex: bigint, toIndex: bigint): Promise<void>;
+    removeFromQueue(index: bigint): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    toggleLike(contentId: ContentId): Promise<void>;
     uploadContent(id: string, title: string, description: string, fileType: FileType, contentBlob: ExternalBlob, thumbnailBlob: ExternalBlob | null, albumCoverBlob: ExternalBlob | null): Promise<void>;
 }
-import type { ContentMetadata as _ContentMetadata, ExternalBlob as _ExternalBlob, FileType as _FileType, SearchCriteria as _SearchCriteria, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { ContentId as _ContentId, ContentMetadata as _ContentMetadata, ExternalBlob as _ExternalBlob, FileType as _FileType, SearchCriteria as _SearchCriteria, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -263,6 +285,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async addComment(arg0: ContentId, arg1: string): Promise<CommentId> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addComment(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addComment(arg0, arg1);
+            return result;
+        }
+    }
+    async addToQueue(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addToQueue(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addToQueue(arg0);
+            return result;
+        }
+    }
     async assignCallerUserRole(arg0: Principal, arg1: UserRole): Promise<void> {
         if (this.processError) {
             try {
@@ -274,6 +324,62 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n8(this._uploadFile, this._downloadFile, arg1));
+            return result;
+        }
+    }
+    async clearQueue(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.clearQueue();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.clearQueue();
+            return result;
+        }
+    }
+    async deleteCallerUserProfile(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteCallerUserProfile();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteCallerUserProfile();
+            return result;
+        }
+    }
+    async deleteComment(arg0: ContentId, arg1: CommentId): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteComment(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteComment(arg0, arg1);
+            return result;
+        }
+    }
+    async deleteContent(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteContent(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteContent(arg0);
             return result;
         }
     }
@@ -319,6 +425,20 @@ export class Backend implements backendInterface {
             return from_candid_UserRole_n18(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getComments(arg0: ContentId): Promise<Array<Comment>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getComments(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getComments(arg0);
+            return result;
+        }
+    }
     async getContent(arg0: string): Promise<ContentMetadata> {
         if (this.processError) {
             try {
@@ -347,6 +467,34 @@ export class Backend implements backendInterface {
             return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getLikesCount(arg0: ContentId): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getLikesCount(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getLikesCount(arg0);
+            return result;
+        }
+    }
+    async getPlaybackQueue(): Promise<Array<string>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPlaybackQueue();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPlaybackQueue();
+            return result;
+        }
+    }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
@@ -359,6 +507,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getUserProfile(arg0);
             return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async hasUserLikedContent(arg0: ContentId, arg1: Principal): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.hasUserLikedContent(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.hasUserLikedContent(arg0, arg1);
+            return result;
         }
     }
     async incrementViews(arg0: string): Promise<void> {
@@ -389,6 +551,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async moveItemInQueue(arg0: bigint, arg1: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.moveItemInQueue(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.moveItemInQueue(arg0, arg1);
+            return result;
+        }
+    }
+    async removeFromQueue(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.removeFromQueue(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.removeFromQueue(arg0);
+            return result;
+        }
+    }
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
@@ -400,6 +590,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.saveCallerUserProfile(arg0);
+            return result;
+        }
+    }
+    async toggleLike(arg0: ContentId): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.toggleLike(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.toggleLike(arg0);
             return result;
         }
     }
@@ -446,7 +650,7 @@ function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Ar
     return value.length === 0 ? null : value[0];
 }
 async function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    id: string;
+    id: _ContentId;
     title: string;
     contentBlob: _ExternalBlob;
     views: bigint;
@@ -459,7 +663,7 @@ async function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promi
     comments: bigint;
     uploadTime: bigint;
 }): Promise<{
-    id: string;
+    id: ContentId;
     title: string;
     contentBlob: ExternalBlob;
     views: bigint;

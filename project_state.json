@@ -1,44 +1,24 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Social media platform called 'The Arena' for AI-generated music and video content. Users can upload MP3/WAV audio files and video files from any device, upload album covers, and create thumbnails for their content.",
-  "architectural_notes": [
-    "Platform name: The Arena — social media for AI-generated music and video content",
-    "Support file types: MP3, WAV for audio; common video formats for video uploads"
-  ],
+  "summary": "Project includes music/video upload for Gail and now adding profile/content deletion features.",
+  "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
-  "imageRequirements": "## Required Images\n- Dark arena stage wordmark logo with bold glowing lettering and a spotlight or stage motif (arena-logo.dim_400x120.png)\n- Abstract dark background with subtle neon light rays and crowd silhouette for hero/landing sections (arena-hero-bg.dim_1440x600.png)\n- Default placeholder thumbnail for audio tracks — dark music note icon on deep charcoal (default-audio-thumb.dim_400x400.png)\n- Default placeholder thumbnail for video content — dark play button icon on deep charcoal (default-video-thumb.dim_400x400.png)",
   "existing_features": [
     {
-      "id": "feature-build-a-content-upload-flow-that-supports-mp3-wav-and-common-video-formats-mp4-webm-mov-the-upload-ui-must-work-responsively-on-both-mobile-and-desktop-users-must-be-able-to-select-an-audio-or-video-file-optionally-upload-an-album-cover-image-and-optionally-create-or-upload-a-thumbnail-all-file-reading-should-happen-client-side-before-sending-to-the-backend",
-      "title": "Build a content upload flow that supports MP3, WAV, and common video formats (MP4, WebM, MOV). The upload UI must work responsively on both mobile and desktop. Users must be able to: select an audio or video file, optionally upload an album cover image, and optionally create or upload a thumbnail. All file reading should happen client-side before sending to the backend.",
+      "id": "feature-add-a-delete-profile-option-to-the-user-s-profile-area-that-allows-an-authenticated-user-to-permanently-delete-their-profile-from-the-platform-the-action-must-prompt-the-user-with-a-confirmation-dialog-before-proceeding-upon-successful-deletion-the-user-should-be-logged-out-and-redirected-to-the-feed-page",
+      "title": "Add a 'Delete Profile' option to the user's profile area that allows an authenticated user to permanently delete their profile from the platform. The action must prompt the user with a confirmation dialog before proceeding. Upon successful deletion, the user should be logged out and redirected to the feed page.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-optional-delete-content-button-to-each-content-item-that-the-authenticated-user-owns-the-button-should-only-be-visible-to-the-content-owner-clicking-it-must-show-a-confirmation-dialog-before-permanently-deleting-the-content-item-after-deletion-the-content-item-should-be-removed-from-the-feed",
+      "title": "Add an optional 'Delete Content' button to each content item that the authenticated user owns. The button should only be visible to the content owner. Clicking it must show a confirmation dialog before permanently deleting the content item. After deletion, the content item should be removed from the feed.",
       "reqIds": [
         "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-create-a-social-media-discovery-feed-page-that-displays-uploaded-ai-music-and-video-content-as-cards-each-card-must-show-the-thumbnail-or-album-cover-title-uploader-name-derived-from-principal-file-type-badge-and-like-count-clicking-a-card-opens-a-detail-player-view-where-audio-and-video-files-can-be-played-directly-in-the-browser",
-      "title": "Create a social media discovery feed page that displays uploaded AI music and video content as cards. Each card must show the thumbnail or album cover, title, uploader name (derived from principal), file type badge, and like count. Clicking a card opens a detail/player view where audio and video files can be played directly in the browser.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-implement-a-thumbnail-creation-tool-in-the-upload-flow-for-video-uploads-display-a-scrubber-that-lets-the-user-seek-through-a-video-preview-and-capture-a-specific-frame-as-the-thumbnail-for-audio-uploads-allow-the-user-to-upload-a-custom-image-as-the-thumbnail-album-cover-the-generated-or-selected-thumbnail-should-be-previewed-before-submission",
-      "title": "Implement a thumbnail creation tool in the upload flow. For video uploads, display a scrubber that lets the user seek through a video preview and capture a specific frame as the thumbnail. For audio uploads, allow the user to upload a custom image as the thumbnail/album cover. The generated or selected thumbnail should be previewed before submission.",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-apply-a-bold-dark-arena-style-visual-theme-throughout-the-application-use-a-dark-charcoal-near-black-background-vivid-neon-accent-colors-e-g-electric-gold-or-neon-orange-strong-typographic-hierarchy-with-a-modern-sans-serif-font-and-glowing-card-hover-effects-the-aesthetic-should-feel-like-a-high-energy-performance-stage-or-music-venue-consistent-across-all-pages-and-components",
-      "title": "Apply a bold, dark arena-style visual theme throughout the application. Use a dark charcoal/near-black background, vivid neon accent colors (e.g., electric gold or neon orange), strong typographic hierarchy with a modern sans-serif font, and glowing card hover effects. The aesthetic should feel like a high-energy performance stage or music venue, consistent across all pages and components.",
-      "reqIds": [
-        "REQ-5"
       ],
       "version": 1
     }
@@ -46,50 +26,17 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Music/audio file upload supporting MP3 and WAV formats",
+      "summary": "Add delete profile option for users",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Video content upload support",
+      "summary": "Add optional delete content button",
       "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Album cover upload option for tracks",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Thumbnail creation tool for uploaded content",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-5",
-      "summary": "Cross-device compatibility for uploads (mobile and desktop)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-6",
-      "summary": "Social media feed/discovery for AI music and video content",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-7",
-      "summary": "Create a Motoko backend actor that stores user-uploaded content metadata, including: title, description, file type (mp3, wav, video), file data as Blob, album cover image Blob (optional), thumbnail image Blob (optional), uploader principal, upload timestamp, and like/comment counts. Expose update calls for uploading content and query calls for fetching the feed, fetching a single post, and fetching posts by a specific user.",
-      "reqIds": [
-        "REQ-1"
-      ],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
   "projectName": "The Arena",
   "clarification_mode": "instant",
   "clarification_rounds": 0
