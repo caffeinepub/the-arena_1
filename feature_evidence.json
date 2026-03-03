@@ -2,52 +2,9 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-every-authenticated-user-must-be-able-to-edit-their-own-profile-e-g-display-name-artist-name-the-backend-must-expose-an-update-profile-endpoint-gated-so-a-user-can-only-update-their-own-profile-principal-the-frontend-profile-menu-must-surface-an-edit-profile-action-that-opens-a-form-pre-filled-with-the-user-s-current-details-and-saves-changes-via-that-endpoint",
-      "featureTitle": "Every authenticated user must be able to edit their own profile (e.g., display name / artist name). The backend must expose an update-profile endpoint gated so a user can only update their own profile principal. The frontend profile menu must surface an 'Edit Profile' action that opens a form pre-filled with the user's current details and saves changes via that endpoint.",
+      "featureId": "feature-add-react-query-hooks-in-usequeries-ts-for-all-post-operations-usegetallposts-usegetpostsbyuser-usecreatepost-mutation-usedeletepost-mutation-and-uselikepost-mutation-invalidate-the-posts-query-cache-on-successful-create-delete-or-like-mutations",
+      "featureTitle": "Add React Query hooks in useQueries.ts for all post operations: useGetAllPosts, useGetPostsByUser, useCreatePost (mutation), useDeletePost (mutation), and useLikePost (mutation). Invalidate the posts query cache on successful create, delete, or like mutations.",
       "files": [
-        "frontend/src/components/EditProfileDialog.tsx",
-        "frontend/src/components/ProfileMenu.tsx",
-        "frontend/src/hooks/useQueries.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-every-authenticated-user-must-be-able-to-delete-any-piece-of-content-they-own-the-backend-deletecontent-endpoint-must-verify-that-the-caller-s-principal-matches-the-content-owner-before-performing-the-deletion-the-delete-button-on-contentcard-and-contentdetailpage-must-be-visible-only-to-the-content-owner-and-must-show-a-confirmation-dialog-using-the-existing-confirmationdialog-component-before-executing-the-deletion-after-deletion-the-content-must-be-removed-from-the-feed-and-queue",
-      "featureTitle": "Every authenticated user must be able to delete any piece of content they own. The backend deleteContent endpoint must verify that the caller's principal matches the content owner before performing the deletion. The delete button on ContentCard and ContentDetailPage must be visible only to the content owner and must show a confirmation dialog (using the existing ConfirmationDialog component) before executing the deletion. After deletion the content must be removed from the feed and queue.",
-      "files": [
-        "frontend/src/hooks/useQueries.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-every-authenticated-user-must-be-able-to-permanently-delete-their-own-account-profile-the-backend-deleteprofile-endpoint-must-verify-the-caller-s-principal-before-deleting-the-profile-and-all-associated-data-the-profilemenu-delete-account-option-must-show-a-confirmation-dialog-using-the-existing-confirmationdialog-component-before-executing-after-successful-deletion-the-user-must-be-logged-out-and-redirected-to-the-feed-home-page",
-      "featureTitle": "Every authenticated user must be able to permanently delete their own account (profile). The backend deleteProfile endpoint must verify the caller's principal before deleting the profile and all associated data. The ProfileMenu 'Delete Account' option must show a confirmation dialog (using the existing ConfirmationDialog component) before executing. After successful deletion the user must be logged out and redirected to the feed/home page.",
-      "files": [
-        "frontend/src/components/ProfileMenu.tsx",
         "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
@@ -61,6 +18,47 @@
       ],
       "testIds": [
         "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-a-new-page-component-at-frontend-src-pages-whatsonyourmindpage-tsx-the-page-should-include-a-prominent-heading-what-s-on-your-mind-a-text-area-for-typing-thoughts-or-post-content-max-500-characters-with-a-live-character-counter-an-optional-media-attachment-input-supporting-images-and-videos-displayed-as-a-preview-before-posting-a-post-submit-button-disabled-when-text-is-empty-and-no-media-is-attached-and-shows-a-loading-state-while-posting-and-a-feed-of-all-posts-displayed-below-the-composer-in-reverse-chronological-order-each-post-card-must-show-the-author-s-display-name-and-avatar-fetched-via-existing-profile-hooks-the-post-text-an-optional-media-preview-a-like-button-with-count-the-post-timestamp-and-a-delete-button-visible-only-to-the-post-s-author",
+      "featureTitle": "Create a new page component at frontend/src/pages/WhatsOnYourMindPage.tsx. The page should include: a prominent heading 'What's on Your Mind?', a text area for typing thoughts or post content (max ~500 characters with a live character counter), an optional media attachment input supporting images and videos (displayed as a preview before posting), a 'Post' submit button (disabled when text is empty and no media is attached, and shows a loading state while posting), and a feed of all posts displayed below the composer in reverse chronological order. Each post card must show: the author's display name and avatar (fetched via existing profile hooks), the post text, an optional media preview, a like button with count, the post timestamp, and a delete button (visible only to the post's author).",
+      "files": [
+        "frontend/src/pages/WhatsOnYourMindPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-register-a-new-route-mind-for-the-whatsonyourmindpage-in-frontend-src-app-tsx-and-add-a-navigation-link-labeled-what-s-on-your-mind-or-a-short-variant-like-mind-to-the-sticky-header-in-frontend-src-components-layout-tsx-alongside-the-existing-feed-and-upload-links",
+      "featureTitle": "Register a new route '/mind' for the WhatsOnYourMindPage in frontend/src/App.tsx and add a navigation link labeled 'What's on Your Mind' (or a short variant like 'Mind') to the sticky header in frontend/src/components/Layout.tsx, alongside the existing Feed and Upload links.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/Layout.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
       ],
       "confidence": "high"
     }

@@ -1,85 +1,63 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Per-user profile management, content deletion, and account deletion",
+  "title": "Add 'What's on Your Mind' post/thought upload page",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Enable authenticated users to edit their own profile (display name/artist name) via a pre-filled form accessible from the ProfileMenu",
-      "acceptanceCriteria": [
-        "An authenticated user can open a profile edit form from the ProfileMenu dropdown.",
-        "The form is pre-populated with the user's current display name.",
-        "Submitting the form updates the profile in the backend and reflects the new name in the UI without a full page reload.",
-        "A user cannot update another user's profile — the backend rejects mismatched principals.",
-        "Unauthenticated users cannot access the edit profile action."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/ProfileMenu.tsx",
-          "operation": "modify",
-          "description": "Add an 'Edit Profile' menu item in the ProfileMenu dropdown that opens an edit profile dialog. The item should appear between the existing menu content and the Delete Account option. Wire the dialog trigger to show the edit profile form when clicked."
-        },
-        {
-          "path": "frontend/src/components/EditProfileDialog.tsx",
-          "operation": "create",
-          "description": "Create a dialog component using the existing shadcn/ui Dialog primitives that displays a form for editing the user's display name. Pre-populate the input field with the current user's name from the useGetCallerUserProfile hook. On form submission, call the useEditProfile mutation hook to update the profile, invalidate the currentUserProfile query to refresh the displayed name, and close the dialog. Include validation to prevent empty names and show a pending state during the mutation."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Add a useEditProfile mutation hook that calls actor.editProfile with the updated UserProfile object. On success, invalidate the 'currentUserProfile' query key to trigger a refetch so the new name appears immediately in the UI. Handle errors gracefully by displaying them to the user via toast or inline message."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Enable authenticated users to delete any content they own via a confirmation dialog, removing it from the feed and playback queue",
-      "acceptanceCriteria": [
-        "The delete button on a content card is visible only when the logged-in user is the content owner.",
-        "Clicking delete opens the ConfirmationDialog before any destructive action.",
-        "Confirming deletion calls the backend, which rejects the call if the caller is not the owner.",
-        "The deleted content card disappears from the feed immediately after a successful deletion.",
-        "The deleted content is also removed from the playback queue if present.",
-        "Non-owners do not see the delete button and cannot delete content via the backend."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/ContentCard.tsx",
-          "operation": "modify",
-          "description": "Ensure the delete button is conditionally rendered only when the logged-in user's principal matches the content.uploader principal using the isContentOwner utility from useInternetIdentity. The delete button already uses the ConfirmationDialog component and calls the useDeleteContent mutation; verify that the mutation invalidates both the content list queries and the playback queue query so deleted content disappears from the feed and queue immediately."
-        },
-        {
-          "path": "frontend/src/pages/ContentDetailPage.tsx",
-          "operation": "modify",
-          "description": "Add a delete button to the ContentDetailPage that is visible only to the content owner (check identity.getPrincipal() against content.uploader). Use the existing ConfirmationDialog component to prompt for confirmation before calling the useDeleteContent mutation. On successful deletion, navigate back to the feed page using the router. Ensure the mutation invalidates the playback queue query to remove the deleted content from the queue."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Ensure the useDeleteContent mutation invalidates both the content list query keys ('allContent', 'contentBySearch') and the 'playbackQueue' query key on success, so deleted content is removed from the feed and queue immediately. Verify error handling for backend authorization failures and display appropriate error messages to the user."
-        }
-      ]
-    },
-    {
       "id": "REQ-3",
-      "summary": "Enable authenticated users to permanently delete their own account via a confirmation dialog in the ProfileMenu, logging them out and redirecting to the feed",
+      "summary": "Add React Query hooks for all post operations with cache invalidation",
       "acceptanceCriteria": [
-        "The 'Delete Account' option is present in the ProfileMenu for any authenticated user.",
-        "Clicking 'Delete Account' opens a confirmation dialog warning the user that the action is permanent.",
-        "Confirming calls the backend deleteProfile endpoint, which validates the caller's principal.",
-        "After successful deletion the session is cleared, the user is logged out, and they are redirected to the feed page.",
-        "A user cannot delete another user's account — the backend rejects mismatched principals."
+        "useGetAllPosts fetches all posts and caches them under a 'posts' query key",
+        "useCreatePost mutation calls the backend and invalidates the posts cache on success",
+        "useDeletePost and useLikePost mutations also invalidate the posts cache",
+        "useGetPostsByUser accepts a principal parameter and fetches that user's posts"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/ProfileMenu.tsx",
-          "operation": "modify",
-          "description": "Ensure the existing 'Delete Account' menu item uses the ConfirmationDialog component to prompt the user with a warning that account deletion is permanent. On confirmation, call the useDeleteProfile mutation hook (not useDeleteUserProfile). After successful deletion, call clear() from useInternetIdentity to log out the user, clear the React Query cache via queryClient.clear(), and navigate to the feed page using the router."
-        },
-        {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add a useDeleteProfile mutation hook that calls actor.deleteUserProfile (the backend method name). On success, the calling component will handle logout and navigation. Include error handling to display backend authorization failures or other errors to the user via toast or inline message."
+          "description": "Add React Query hooks for post operations: useGetAllPosts (query hook fetching all posts from backend.getAllThoughts(), cached under 'allPosts' key), useGetPostsByUser (query hook fetching posts for a given principal via backend.getThoughtsByUser(user), cached under ['userPosts', principal]), useCreatePost (mutation hook calling backend.createThought(content, media) and invalidating 'allPosts' and 'userPosts' caches on success), useDeletePost (mutation hook calling backend.deleteThought(thoughtId) and invalidating caches on success), and useLikePost (mutation hook calling backend.likeThought(thoughtId) and invalidating caches on success). Follow the existing query/mutation patterns in the file for error handling and cache invalidation."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Create the What's on Your Mind page with composer and post feed",
+      "acceptanceCriteria": [
+        "Page renders a composer area with a text area and optional media upload",
+        "Character counter updates in real time and prevents submission over the limit",
+        "Submitted post appears immediately in the feed after creation",
+        "Post cards show author avatar, display name, text, optional media, like count, and timestamp",
+        "Only the post's author sees the delete button; clicking it removes the post after confirmation",
+        "Like button increments the count optimistically and syncs with the backend",
+        "Page is accessible when the user is not logged in (read-only feed; composer hidden or disabled)"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/WhatsOnYourMindPage.tsx",
+          "operation": "create",
+          "description": "Create a new page component featuring: a prominent 'What's on Your Mind?' heading, a composer section (visible only when authenticated) with a textarea for post content (max 500 characters with live character counter displayed), an optional media upload button using FileUploadInput component (supports images and videos, shows preview), a 'Post' submit button (disabled when both text is empty and no media is attached, shows loading state during submission via useCreatePost mutation), and below the composer, a scrollable feed of all posts fetched via useGetAllPosts in reverse chronological order. Each post card must display: the author's display name and avatar (resolved using getUserProfile and getProfilePicture hooks with the author principal), the post text content, an optional media preview (if post.media exists, use post.media.getDirectURL() for images/videos), a like button with the current like count (clicking calls useLikePost mutation with optimistic update), a timestamp formatted as relative time (e.g., '2 hours ago'), and a delete button visible only when the current user's identity principal matches the post's author principal (clicking shows a ConfirmationDialog before calling useDeletePost mutation). When not authenticated, hide the composer and show a message prompting the user to log in to post. Use the authorization component's useInternetIdentity hook to check authentication status and get the current user's principal for ownership checks. For media uploads, use ExternalBlob.fromBytes() to wrap the file data before passing to the backend. Verify the authorization and blob-storage component usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Register the /mind route and add navigation link to the header",
+      "acceptanceCriteria": [
+        "Navigating to /mind renders the WhatsOnYourMindPage",
+        "The header navigation includes a link to the /mind route",
+        "Active route link is visually highlighted consistently with existing nav links"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Import WhatsOnYourMindPage and register a new route at path '/mind' in the TanStack Router configuration, rendering the WhatsOnYourMindPage component. Follow the existing route registration pattern used for Feed, Upload, ContentDetail, and UserProfile routes."
+        },
+        {
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "modify",
+          "description": "Add a new navigation link labeled 'Mind' (or 'What's on Your Mind') to the sticky header navigation menu, positioned alongside the existing Feed and Upload links. The link should navigate to '/mind' and use the same active-state highlighting logic as the other nav links (checking window.location.pathname and applying active styles). Ensure the link is visible in both mobile and desktop layouts."
         }
       ]
     }

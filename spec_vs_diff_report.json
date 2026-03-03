@@ -1,16 +1,31 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-03-02T21:26:54.545Z",
-  "summary": "The diff implements most of the three requirements. REQ-1 (edit profile) and REQ-3 (delete account) appear fully implemented. REQ-2 (delete content) has frontend support in ContentCard and ContentDetailPage per the file summaries, and backend principal checks are present. However, one specific AC for REQ-2 — removal from the playback queue after deletion — requires scrutiny: the backend deleteUserProfile removes the user's queue but there is no evidence that deleteContent removes the content from other users' playback queues.",
+  "generatedAt": "2026-03-03T01:14:31.722Z",
+  "summary": "The implementation covers most requirements across all five REQs. The backend adds a Post data model and the required functions, the frontend adds React Query hooks, a new WhatsOnYourMindPage, a /mind route, and a nav link. A few specific acceptance criteria have gaps: the optionalMediaMimeType field appears absent from the Post type as a distinct field; stable memory for posts is unclear from the diff; and the AC about the page being accessible when not logged in is not clearly confirmed in the truncated frontend file.",
   "missing_requirements": [
     {
-      "id": "REQ-2",
-      "requirement": "The deleted content must also be removed from the playback queue if present after deletion.",
-      "reason": "The diff does not show the backend deleteContent implementation removing the content from playback queues, nor does the visible portion of useDeleteContent in useQueries.ts show queue invalidation. This AC cannot be verified from the available diff.",
+      "id": "REQ-1",
+      "requirement": "optionalMediaMimeType (optional Text) field in Post data type",
+      "reason": "The Post type defined in backend/main.mo shows fields: id, author, timestamp, content, media (ExternalBlob), and likes — but no separate mimeType field. The spec requires it as a distinct optional Text field on the post record.",
       "evidence": [
-        "frontend/src/hooks/useQueries.ts",
         "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-1",
+      "requirement": "Posts stored in stable memory so they survive upgrades",
+      "reason": "The diff shows 'let posts = Map.empty<PostId, Post>()' but does not show a 'stable var' declaration or explicit stable memory persistence for the posts map. Without the stable keyword the map may not survive canister upgrades.",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Page is accessible when the user is not logged in (read-only feed; composer hidden or disabled)",
+      "reason": "The WhatsOnYourMindPage.tsx file is truncated and does not clearly show logic that hides or disables the composer for unauthenticated users while still rendering the read-only feed.",
+      "evidence": [
+        "frontend/src/pages/WhatsOnYourMindPage.tsx"
       ]
     }
   ],
@@ -19,9 +34,10 @@
   "changed_files": [
     "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/EditProfileDialog.tsx",
-    "frontend/src/components/ProfileMenu.tsx",
+    "frontend/src/App.tsx",
+    "frontend/src/components/Layout.tsx",
     "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/WhatsOnYourMindPage.tsx",
     "project_state.json"
   ]
 }

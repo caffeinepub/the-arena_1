@@ -5,6 +5,8 @@ import FeedPage from './pages/FeedPage';
 import UploadPage from './pages/UploadPage';
 import ContentDetailPage from './pages/ContentDetailPage';
 import ProfileSetupModal from './pages/ProfileSetupModal';
+import UserProfilePage from './pages/UserProfilePage';
+import WhatsOnYourMindPage from './pages/WhatsOnYourMindPage';
 import { useInternetIdentity } from './hooks/useInternetIdentity';
 import { useGetCallerUserProfile } from './hooks/useQueries';
 
@@ -48,7 +50,25 @@ const contentDetailRoute = createRoute({
   component: ContentDetailPage,
 });
 
-const routeTree = rootRoute.addChildren([feedRoute, uploadRoute, contentDetailRoute]);
+const userProfileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/profile/$principal',
+  component: UserProfilePage,
+});
+
+const mindRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/mind',
+  component: WhatsOnYourMindPage,
+});
+
+const routeTree = rootRoute.addChildren([
+  feedRoute,
+  uploadRoute,
+  contentDetailRoute,
+  userProfileRoute,
+  mindRoute,
+]);
 
 const router = createRouter({ routeTree });
 

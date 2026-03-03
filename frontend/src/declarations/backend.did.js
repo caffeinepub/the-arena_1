@@ -26,8 +26,18 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
-export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const ExternalBlob = IDL.Vec(IDL.Nat8);
+export const PostId = IDL.Nat;
+export const Counts = IDL.Record({
+  'followers' : IDL.Nat,
+  'following' : IDL.Nat,
+});
+export const UserProfile = IDL.Record({
+  'bio' : IDL.Opt(IDL.Text),
+  'name' : IDL.Text,
+  'profilePicture' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  'counts' : Counts,
+});
 export const FileType = IDL.Variant({
   'audioMp3' : IDL.Null,
   'audioWav' : IDL.Null,
@@ -48,6 +58,14 @@ export const ContentMetadata = IDL.Record({
   'uploader' : IDL.Principal,
   'comments' : IDL.Nat,
   'uploadTime' : IDL.Int,
+});
+export const Post = IDL.Record({
+  'id' : PostId,
+  'media' : IDL.Opt(ExternalBlob),
+  'content' : IDL.Text,
+  'author' : IDL.Principal,
+  'likes' : IDL.Nat,
+  'timestamp' : IDL.Int,
 });
 export const Comment = IDL.Record({
   'id' : CommentId,
@@ -95,15 +113,19 @@ export const idlService = IDL.Service({
   'addToQueue' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'clearQueue' : IDL.Func([], [], []),
+  'createThought' : IDL.Func([IDL.Text, IDL.Opt(ExternalBlob)], [PostId], []),
   'deleteComment' : IDL.Func([ContentId, CommentId], [], []),
   'deleteContent' : IDL.Func([ContentId], [], []),
+  'deleteThought' : IDL.Func([PostId], [], []),
   'deleteUserProfile' : IDL.Func([], [], []),
   'editProfile' : IDL.Func([UserProfile], [], []),
+  'followUser' : IDL.Func([IDL.Principal], [], []),
   'getAllContent' : IDL.Func(
       [IDL.Nat, IDL.Nat],
       [IDL.Vec(ContentMetadata)],
       ['query'],
     ),
+  'getAllThoughts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getComments' : IDL.Func([ContentId], [IDL.Vec(Comment)], ['query']),
@@ -113,8 +135,17 @@ export const idlService = IDL.Service({
       [IDL.Vec(ContentMetadata)],
       ['query'],
     ),
+  'getCounts' : IDL.Func([IDL.Principal], [IDL.Opt(Counts)], ['query']),
   'getLikesCount' : IDL.Func([ContentId], [IDL.Nat], ['query']),
+  'getMyThoughts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
   'getPlaybackQueue' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
+  'getProfilePicture' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(IDL.Vec(IDL.Nat8))],
+      ['query'],
+    ),
+  'getThought' : IDL.Func([PostId], [Post], ['query']),
+  'getThoughtsByUser' : IDL.Func([IDL.Principal], [IDL.Vec(Post)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -127,10 +158,15 @@ export const idlService = IDL.Service({
     ),
   'incrementViews' : IDL.Func([IDL.Text], [], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'isFollowing' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
+  'likeThought' : IDL.Func([PostId], [], []),
   'moveItemInQueue' : IDL.Func([IDL.Nat, IDL.Nat], [], []),
   'removeFromQueue' : IDL.Func([IDL.Nat], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'toggleLike' : IDL.Func([ContentId], [], []),
+  'unfollowUser' : IDL.Func([IDL.Principal], [], []),
+  'updateProfilePicture' : IDL.Func([IDL.Opt(IDL.Vec(IDL.Nat8))], [], []),
+  'updateThought' : IDL.Func([PostId, IDL.Text, IDL.Opt(ExternalBlob)], [], []),
   'uploadContent' : IDL.Func(
       [
         IDL.Text,
@@ -167,8 +203,15 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
-  const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const ExternalBlob = IDL.Vec(IDL.Nat8);
+  const PostId = IDL.Nat;
+  const Counts = IDL.Record({ 'followers' : IDL.Nat, 'following' : IDL.Nat });
+  const UserProfile = IDL.Record({
+    'bio' : IDL.Opt(IDL.Text),
+    'name' : IDL.Text,
+    'profilePicture' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'counts' : Counts,
+  });
   const FileType = IDL.Variant({
     'audioMp3' : IDL.Null,
     'audioWav' : IDL.Null,
@@ -189,6 +232,14 @@ export const idlFactory = ({ IDL }) => {
     'uploader' : IDL.Principal,
     'comments' : IDL.Nat,
     'uploadTime' : IDL.Int,
+  });
+  const Post = IDL.Record({
+    'id' : PostId,
+    'media' : IDL.Opt(ExternalBlob),
+    'content' : IDL.Text,
+    'author' : IDL.Principal,
+    'likes' : IDL.Nat,
+    'timestamp' : IDL.Int,
   });
   const Comment = IDL.Record({
     'id' : CommentId,
@@ -236,15 +287,19 @@ export const idlFactory = ({ IDL }) => {
     'addToQueue' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'clearQueue' : IDL.Func([], [], []),
+    'createThought' : IDL.Func([IDL.Text, IDL.Opt(ExternalBlob)], [PostId], []),
     'deleteComment' : IDL.Func([ContentId, CommentId], [], []),
     'deleteContent' : IDL.Func([ContentId], [], []),
+    'deleteThought' : IDL.Func([PostId], [], []),
     'deleteUserProfile' : IDL.Func([], [], []),
     'editProfile' : IDL.Func([UserProfile], [], []),
+    'followUser' : IDL.Func([IDL.Principal], [], []),
     'getAllContent' : IDL.Func(
         [IDL.Nat, IDL.Nat],
         [IDL.Vec(ContentMetadata)],
         ['query'],
       ),
+    'getAllThoughts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getComments' : IDL.Func([ContentId], [IDL.Vec(Comment)], ['query']),
@@ -254,8 +309,17 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(ContentMetadata)],
         ['query'],
       ),
+    'getCounts' : IDL.Func([IDL.Principal], [IDL.Opt(Counts)], ['query']),
     'getLikesCount' : IDL.Func([ContentId], [IDL.Nat], ['query']),
+    'getMyThoughts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
     'getPlaybackQueue' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
+    'getProfilePicture' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(IDL.Vec(IDL.Nat8))],
+        ['query'],
+      ),
+    'getThought' : IDL.Func([PostId], [Post], ['query']),
+    'getThoughtsByUser' : IDL.Func([IDL.Principal], [IDL.Vec(Post)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -268,10 +332,19 @@ export const idlFactory = ({ IDL }) => {
       ),
     'incrementViews' : IDL.Func([IDL.Text], [], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'isFollowing' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
+    'likeThought' : IDL.Func([PostId], [], []),
     'moveItemInQueue' : IDL.Func([IDL.Nat, IDL.Nat], [], []),
     'removeFromQueue' : IDL.Func([IDL.Nat], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'toggleLike' : IDL.Func([ContentId], [], []),
+    'unfollowUser' : IDL.Func([IDL.Principal], [], []),
+    'updateProfilePicture' : IDL.Func([IDL.Opt(IDL.Vec(IDL.Nat8))], [], []),
+    'updateThought' : IDL.Func(
+        [PostId, IDL.Text, IDL.Opt(ExternalBlob)],
+        [],
+        [],
+      ),
     'uploadContent' : IDL.Func(
         [
           IDL.Text,

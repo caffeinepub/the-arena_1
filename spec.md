@@ -1,12 +1,15 @@
 # Specification
 
 ## Summary
-**Goal:** Give every authenticated user control over their own profile and content — including editing their profile, deleting their own content, and permanently deleting their account.
+**Goal:** Add a "What's on Your Mind?" page where users can write and share posts/thoughts, optionally attach media, and interact with a community feed.
 
 **Planned changes:**
-- Add a backend `updateProfile` endpoint that only allows a user to update their own profile (validated by principal); expose an "Edit Profile" form in the ProfileMenu pre-filled with current display name.
-- Add a backend `deleteContent` endpoint that verifies the caller owns the content before deleting; show a delete button on ContentCard and ContentDetailPage only to the content owner, guarded by a ConfirmationDialog, and remove the item from the feed and playback queue on success.
-- Add a backend `deleteProfile` endpoint that verifies the caller's principal before permanently deleting the account and all associated data; add a "Delete Account" option in the ProfileMenu behind a ConfirmationDialog, then log the user out and redirect to the feed on success.
-- All ownership checks enforced on the backend; use the existing ConfirmationDialog component for all destructive prompts.
+- Add a `Post` data model in the backend with fields for postId, authorPrincipal, textContent, optional media blob/mimeType, createdAt, and likes; stored in stable memory
+- Expose backend functions: `createPost`, `deletePost`, `getAllPosts`, `getPostsByUser`, and `likePost`
+- Add React Query hooks in `useQueries.ts` for all post operations (`useGetAllPosts`, `useGetPostsByUser`, `useCreatePost`, `useDeletePost`, `useLikePost`) with proper cache invalidation
+- Create `WhatsOnYourMindPage.tsx` with a post composer (text area with 500-character live counter, optional image/video attachment with preview, submit button with loading state) and a reverse-chronological post feed
+- Each post card shows author avatar, display name, post text, optional media, like button with count, timestamp, and a delete button (author only)
+- Unauthenticated users see the read-only feed; the composer is hidden or disabled
+- Register route `/mind` in `App.tsx` and add a "Mind" navigation link in the sticky header alongside existing nav links
 
-**User-visible outcome:** Logged-in users can edit their display name from the profile menu, delete any content they own with a confirmation step, and permanently delete their own account with a confirmation step followed by automatic logout.
+**User-visible outcome:** Users can navigate to the "What's on Your Mind?" page, compose and publish text posts with optional media, like posts, and delete their own posts from a live community feed.

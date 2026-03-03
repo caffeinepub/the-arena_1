@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useRouterState } from '@tanstack/react-router';
-import { Upload, Tv2, Heart, ListMusic } from 'lucide-react';
+import { Upload, Tv2, Heart, ListMusic, MessageSquare } from 'lucide-react';
 import LoginButton from './LoginButton';
 import ProfileMenu from './ProfileMenu';
 import QueuePanel from './QueuePanel';
@@ -22,6 +22,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navLinks = [
     { to: '/', label: 'Feed', icon: <Tv2 className="w-4 h-4" /> },
     { to: '/upload', label: 'Upload', icon: <Upload className="w-4 h-4" /> },
+    { to: '/mind', label: 'Mind', icon: <MessageSquare className="w-4 h-4" /> },
   ];
 
   return (

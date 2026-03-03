@@ -1,14 +1,14 @@
 import Storage "blob-storage/Storage";
 import Array "mo:core/Array";
 import Int "mo:core/Int";
+import Iter "mo:core/Iter";
 import List "mo:core/List";
 import Map "mo:core/Map";
-import Set "mo:core/Set";
-import Time "mo:core/Time";
-import Iter "mo:core/Iter";
 import Order "mo:core/Order";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
+import Set "mo:core/Set";
+import Time "mo:core/Time";
 
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
@@ -20,6 +20,7 @@ actor {
 
   type ContentId = Text;
   type CommentId = Nat;
+  type PostId = Nat;
 
   type FileType = {
     #audioMp3;
@@ -50,8 +51,16 @@ actor {
     };
   };
 
+  public type Counts = {
+    followers : Nat;
+    following : Nat;
+  };
+
   public type UserProfile = {
     name : Text;
+    bio : ?Text;
+    profilePicture : ?Blob;
+    counts : Counts;
   };
 
   public type Comment = {
@@ -67,21 +76,161 @@ actor {
   let playbackQueues = Map.empty<Principal, List.List<ContentId>>();
   let contentLikes = Map.empty<ContentId, Set.Set<Principal>>();
   let comments = Map.empty<ContentId, Map.Map<CommentId, Comment>>();
+  let followees = Map.empty<Principal, Set.Set<Principal>>();
   var nextCommentId : CommentId = 0;
+
+  // Social/Thoughts functionality
+  public type Post = {
+    id : PostId;
+    author : Principal;
+    timestamp : Int;
+    content : Text;
+    media : ?Storage.ExternalBlob;
+    likes : Nat;
+  };
+
+  let posts = Map.empty<PostId, Post>();
+  var nextPostId : PostId = 1;
+
+  module Post {
+    public func compareByTime(post1 : Post, post2 : Post) : Order.Order {
+      Int.compare(post2.timestamp, post1.timestamp);
+    };
+  };
 
   include MixinStorage();
 
+  // ========================= Follow Functionality =========================
+
+  public shared ({ caller }) func followUser(target : Principal) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can follow others");
+    };
+    if (target == caller) {
+      Runtime.trap("Cannot follow yourself");
+    };
+
+    let alreadyFollowing = switch (followees.get(caller)) {
+      case (null) { false };
+      case (?followingSet) { followingSet.contains(target) };
+    };
+
+    if (alreadyFollowing) {
+      Runtime.trap("Already following this user");
+    };
+
+    let newFollowingSet = switch (followees.get(caller)) {
+      case (null) { Set.singleton(target) };
+      case (?followingSet) {
+        followingSet.add(target);
+        followingSet;
+      };
+    };
+    followees.add(caller, newFollowingSet);
+
+    switch (userProfiles.get(caller)) {
+      case (null) { Runtime.trap("Caller profile not found") };
+      case (?profile) {
+        let updatedProfile = {
+          profile with
+          counts = {
+            profile.counts with
+            following = profile.counts.following + 1;
+          };
+        };
+        userProfiles.add(caller, updatedProfile);
+      };
+    };
+
+    switch (userProfiles.get(target)) {
+      case (null) { Runtime.trap("Target profile not found") };
+      case (?profile) {
+        let updatedProfile = {
+          profile with
+          counts = {
+            profile.counts with
+            followers = profile.counts.followers + 1;
+          };
+        };
+        userProfiles.add(target, updatedProfile);
+      };
+    };
+  };
+
+  // Any authenticated user (including guests) can query follow state;
+  // guests will always get false since they have no follows stored.
+  public query ({ caller }) func isFollowing(target : Principal) : async Bool {
+    switch (followees.get(caller)) {
+      case (null) { false };
+      case (?followingSet) { followingSet.contains(target) };
+    };
+  };
+
+  public shared ({ caller }) func unfollowUser(target : Principal) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can unfollow others");
+    };
+
+    let alreadyFollowing = switch (followees.get(caller)) {
+      case (null) { false };
+      case (?followingSet) { followingSet.contains(target) };
+    };
+
+    if (not alreadyFollowing) {
+      Runtime.trap("Not following this user");
+    };
+
+    let newFollowingSet = switch (followees.get(caller)) {
+      case (null) { Set.empty<Principal>() };
+      case (?followingSet) {
+        followingSet.remove(target);
+        followingSet;
+      };
+    };
+
+    followees.add(caller, newFollowingSet);
+
+    switch (userProfiles.get(caller)) {
+      case (null) { Runtime.trap("Caller profile not found") };
+      case (?profile) {
+        let updatedProfile = {
+          profile with
+          counts = {
+            profile.counts with
+            following = if (profile.counts.following > 0) { profile.counts.following - 1 } else { 0 };
+          };
+        };
+        userProfiles.add(caller, updatedProfile);
+      };
+    };
+
+    switch (userProfiles.get(target)) {
+      case (null) { Runtime.trap("Target profile not found") };
+      case (?profile) {
+        let updatedProfile = {
+          profile with
+          counts = {
+            profile.counts with
+            followers = if (profile.counts.followers > 0) { profile.counts.followers - 1 } else { 0 };
+          };
+        };
+        userProfiles.add(target, updatedProfile);
+      };
+    };
+  };
+
+  // ========================= User Profile Functionality =========================
+
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can get profiles");
+      Runtime.trap("Unauthorized: Only users can get their own profile");
     };
     userProfiles.get(caller);
   };
 
+  // Any caller (including guests) can view any user's public profile,
+  // which is necessary for social features like viewing profiles before following.
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own profile");
-    };
     userProfiles.get(user);
   };
 
@@ -92,7 +241,32 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // New 'editProfile' method allows users to update (only) their own profile
+  public shared ({ caller }) func updateProfilePicture(picture : ?Blob) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("You are not authorized to perform this action");
+    };
+
+    let userProfile = switch (userProfiles.get(caller)) {
+      case (null) { Runtime.trap("User profile not found") };
+      case (?profile) { profile };
+    };
+
+    let updatedProfile = {
+      userProfile with
+      profilePicture = picture;
+    };
+
+    userProfiles.add(caller, updatedProfile);
+  };
+
+  // Any caller can view a user's profile picture (public social feature)
+  public query ({ caller }) func getProfilePicture(user : Principal) : async ?Blob {
+    switch (userProfiles.get(user)) {
+      case (null) { null };
+      case (?profile) { profile.profilePicture };
+    };
+  };
+
   public shared ({ caller }) func editProfile(updatedProfile : UserProfile) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can edit their profile");
@@ -173,6 +347,7 @@ actor {
     };
   };
 
+  // Content search criteria
   public type SearchCriteria = {
     #byUploader : Principal;
     #byFileType : FileType;
@@ -180,6 +355,7 @@ actor {
     #recent;
   };
 
+  // Content browsing is public - any caller including guests can search/browse
   public query ({ caller }) func getContentBySearchCriteria(criteria : SearchCriteria, _start : Nat, _limit : Nat) : async [ContentMetadata] {
     var filtered : Iter.Iter<ContentMetadata> = switch (criteria) {
       case (#byUploader(uploader)) {
@@ -204,10 +380,12 @@ actor {
     filtered.toArray();
   };
 
+  // Content browsing is public - any caller including guests can list content
   public query ({ caller }) func getAllContent(_start : Nat, _limit : Nat) : async [ContentMetadata] {
     contentMap.values().toArray();
   };
 
+  // Content viewing is public - any caller including guests can get content metadata
   public query ({ caller }) func getContent(id : Text) : async ContentMetadata {
     switch (contentMap.get(id)) {
       case (null) { Runtime.trap("Content not found") };
@@ -244,6 +422,7 @@ actor {
     contentMap.add(id, metadata);
   };
 
+  // View counting can be done by any caller (guests can view content too)
   public shared ({ caller }) func incrementViews(id : Text) : async () {
     switch (contentMap.get(id)) {
       case (null) { Runtime.trap("Content not found") };
@@ -257,6 +436,7 @@ actor {
     };
   };
 
+  // Playback queue functions - only authenticated users have queues
   public query ({ caller }) func getPlaybackQueue() : async [Text] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access their playback queue");
@@ -292,7 +472,7 @@ actor {
     };
     let arrayRep = currentQueue.toArray();
     let filtered = Array.tabulate(
-      if (arrayRep.size() == 0) { 0 } else { arrayRep.size() - 1 },
+      if (arrayRep.size() <= 1) { 0 } else { arrayRep.size() - 1 },
       func(i) {
         if (i < index) {
           arrayRep[i];
@@ -320,7 +500,7 @@ actor {
     let arrayRep = currentQueue.toArray();
     let item = arrayRep[fromIndex];
     let withoutItem = Array.tabulate(
-      if (size == 0) { 0 } else { size - 1 },
+      if (size <= 1) { 0 } else { size - 1 },
       func(i) {
         if (i < fromIndex) {
           arrayRep[i];
@@ -352,6 +532,7 @@ actor {
     playbackQueues.add(caller, List.empty<Text>());
   };
 
+  // Like queries are public - any caller can check like counts/state
   public query ({ caller }) func hasUserLikedContent(contentId : ContentId, user : Principal) : async Bool {
     switch (contentLikes.get(contentId)) {
       case (null) { false };
@@ -449,6 +630,7 @@ actor {
     currentId;
   };
 
+  // Comments are public - any caller can read comments
   public query ({ caller }) func getComments(contentId : ContentId) : async [Comment] {
     switch (comments.get(contentId)) {
       case (null) { [] };
@@ -458,8 +640,12 @@ actor {
     };
   };
 
-  // Optional: Delete comment if needed (e.g., by admin or comment author)
+  // Delete comment: only the comment author or an admin can delete
   public shared ({ caller }) func deleteComment(contentId : ContentId, commentId : CommentId) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can delete comments");
+    };
+
     let existingComments = switch (comments.get(contentId)) {
       case (null) { Runtime.trap("Comments not found for content") };
       case (?comments) { comments };
@@ -486,5 +672,131 @@ actor {
       comments = if (content.comments > 0) { content.comments - 1 } else { 0 };
     };
     contentMap.add(contentId, updatedContent);
+  };
+
+  // Counts are public - any caller can view follower/following counts
+  public query ({ caller }) func getCounts(user : Principal) : async ?Counts {
+    switch (userProfiles.get(user)) {
+      case (?profile) { ?profile.counts };
+      case (null) { null };
+    };
+  };
+
+  // ========================= Social/Thoughts Functionality =========================
+
+  public shared ({ caller }) func createThought(content : Text, media : ?Storage.ExternalBlob) : async PostId {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("You are not authorized to perform this action");
+    };
+
+    let thought : Post = {
+      id = nextPostId;
+      author = caller;
+      timestamp = Time.now();
+      content;
+      media;
+      likes = 0;
+    };
+
+    posts.add(nextPostId, thought);
+
+    let thoughtId = nextPostId;
+    nextPostId += 1;
+    thoughtId;
+  };
+
+  // getAllThoughts is public - any caller including guests can browse posts
+  public query ({ caller }) func getAllThoughts() : async [Post] {
+    let thoughts = posts.values().toArray();
+    thoughts.sort(Post.compareByTime);
+  };
+
+  // getThought is public - any caller including guests can view a single post
+  public query ({ caller }) func getThought(thoughtId : PostId) : async Post {
+    switch (posts.get(thoughtId)) {
+      case (null) {
+        Runtime.trap("Thought not found");
+      };
+      case (?thought) {
+        thought;
+      };
+    };
+  };
+
+  // getMyThoughts requires #user - it is a personalized endpoint for the caller's own posts
+  public query ({ caller }) func getMyThoughts() : async [Post] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access their own thoughts");
+    };
+    let thoughts = posts.values().toArray();
+    thoughts.filter(func(thought) { thought.author == caller });
+  };
+
+  public shared ({ caller }) func deleteThought(thoughtId : PostId) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can delete thoughts");
+    };
+    switch (posts.get(thoughtId)) {
+      case (null) {
+        Runtime.trap("Thought not found");
+      };
+      case (?thought) {
+        if (thought.author != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("You are not authorized to delete this thought");
+        };
+        posts.remove(thoughtId);
+      };
+    };
+  };
+
+  // likeThought requires #user - only authenticated users can like posts
+  public shared ({ caller }) func likeThought(thoughtId : PostId) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can like thoughts");
+    };
+    let thought = switch (posts.get(thoughtId)) {
+      case (null) {
+        Runtime.trap("Thought not found");
+      };
+      case (?thought) { thought };
+    };
+
+    let updatedThought = {
+      thought with
+      likes = thought.likes + 1;
+    };
+
+    posts.add(thoughtId, updatedThought);
+  };
+
+  public shared ({ caller }) func updateThought(thoughtId : PostId, content : Text, media : ?Storage.ExternalBlob) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("You are not authorized to perform this action");
+    };
+
+    switch (posts.get(thoughtId)) {
+      case (null) {
+        Runtime.trap("Thought not found");
+      };
+      case (?thought) {
+        if (thought.author != caller) {
+          Runtime.trap("You are not authorized to update this thought");
+        };
+
+        let updatedThought = {
+          thought with
+          content;
+          media;
+        };
+
+        posts.add(thoughtId, updatedThought);
+      };
+    };
+  };
+
+  // getThoughtsByUser is public - any caller including guests can view a user's posts
+  public query ({ caller }) func getThoughtsByUser(user : Principal) : async [Post] {
+    let thoughts = posts.values().toArray();
+    thoughts.filter(func(thought) { thought.author == user });
   };
 };

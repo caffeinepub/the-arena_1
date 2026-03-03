@@ -67,6 +67,11 @@ export default function ContentCard({ content, uploaderName }: ContentCardProps)
     navigate({ to: '/content/$id', params: { id: content.id } });
   };
 
+  const handleUploaderClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate({ to: '/profile/$principal', params: { principal: content.uploader.toString() } });
+  };
+
   const handleAddToQueue = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (identity) addToQueue.mutate(content.id);
@@ -148,7 +153,13 @@ export default function ContentCard({ content, uploaderName }: ContentCardProps)
             {content.title}
           </h3>
           {uploaderName && (
-            <p className="text-xs text-muted-foreground truncate">{uploaderName}</p>
+            <button
+              onClick={handleUploaderClick}
+              className="text-xs text-muted-foreground hover:text-arena-neon transition-colors truncate block text-left w-full"
+              title={`View ${uploaderName}'s profile`}
+            >
+              {uploaderName}
+            </button>
           )}
 
           {/* Actions */}

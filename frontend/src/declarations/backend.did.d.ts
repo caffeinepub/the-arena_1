@@ -33,17 +33,32 @@ export interface ContentMetadata {
   'comments' : bigint,
   'uploadTime' : bigint,
 }
+export interface Counts { 'followers' : bigint, 'following' : bigint }
 export type ExternalBlob = Uint8Array;
 export type FileType = { 'audioMp3' : null } |
   { 'audioWav' : null } |
   { 'videoWebM' : null } |
   { 'videoMP4' : null } |
   { 'videoMov' : null };
+export interface Post {
+  'id' : PostId,
+  'media' : [] | [ExternalBlob],
+  'content' : string,
+  'author' : Principal,
+  'likes' : bigint,
+  'timestamp' : bigint,
+}
+export type PostId = bigint;
 export type SearchCriteria = { 'mostPopular' : null } |
   { 'byFileType' : FileType } |
   { 'byUploader' : Principal } |
   { 'recent' : null };
-export interface UserProfile { 'name' : string }
+export interface UserProfile {
+  'bio' : [] | [string],
+  'name' : string,
+  'profilePicture' : [] | [Uint8Array],
+  'counts' : Counts,
+}
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
@@ -79,11 +94,15 @@ export interface _SERVICE {
   'addToQueue' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'clearQueue' : ActorMethod<[], undefined>,
+  'createThought' : ActorMethod<[string, [] | [ExternalBlob]], PostId>,
   'deleteComment' : ActorMethod<[ContentId, CommentId], undefined>,
   'deleteContent' : ActorMethod<[ContentId], undefined>,
+  'deleteThought' : ActorMethod<[PostId], undefined>,
   'deleteUserProfile' : ActorMethod<[], undefined>,
   'editProfile' : ActorMethod<[UserProfile], undefined>,
+  'followUser' : ActorMethod<[Principal], undefined>,
   'getAllContent' : ActorMethod<[bigint, bigint], Array<ContentMetadata>>,
+  'getAllThoughts' : ActorMethod<[], Array<Post>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getComments' : ActorMethod<[ContentId], Array<Comment>>,
@@ -92,16 +111,29 @@ export interface _SERVICE {
     [SearchCriteria, bigint, bigint],
     Array<ContentMetadata>
   >,
+  'getCounts' : ActorMethod<[Principal], [] | [Counts]>,
   'getLikesCount' : ActorMethod<[ContentId], bigint>,
+  'getMyThoughts' : ActorMethod<[], Array<Post>>,
   'getPlaybackQueue' : ActorMethod<[], Array<string>>,
+  'getProfilePicture' : ActorMethod<[Principal], [] | [Uint8Array]>,
+  'getThought' : ActorMethod<[PostId], Post>,
+  'getThoughtsByUser' : ActorMethod<[Principal], Array<Post>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'hasUserLikedContent' : ActorMethod<[ContentId, Principal], boolean>,
   'incrementViews' : ActorMethod<[string], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'isFollowing' : ActorMethod<[Principal], boolean>,
+  'likeThought' : ActorMethod<[PostId], undefined>,
   'moveItemInQueue' : ActorMethod<[bigint, bigint], undefined>,
   'removeFromQueue' : ActorMethod<[bigint], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'toggleLike' : ActorMethod<[ContentId], undefined>,
+  'unfollowUser' : ActorMethod<[Principal], undefined>,
+  'updateProfilePicture' : ActorMethod<[[] | [Uint8Array]], undefined>,
+  'updateThought' : ActorMethod<
+    [PostId, string, [] | [ExternalBlob]],
+    undefined
+  >,
   'uploadContent' : ActorMethod<
     [
       string,

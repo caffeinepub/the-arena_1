@@ -1,59 +1,118 @@
 {
   "kind": "build_request",
-  "title": "Add delete profile and delete content options",
-  "projectName": "The Arena",
+  "title": "Add 'What's on Your Mind' post/thought upload page",
+  "projectName": "Arena",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a 'Delete Profile' option to the user's profile area that allows an authenticated user to permanently delete their profile from the platform. The action must prompt the user with a confirmation dialog before proceeding. Upon successful deletion, the user should be logged out and redirected to the feed page.",
-      "target": "both",
+      "text": "Add a backend data model for posts/thoughts with fields: postId (UUID or Nat), authorPrincipal, textContent (String), optionalMediaBlob (optional blob for image/video), optionalMediaMimeType (optional Text), createdAt (Int timestamp), and likes (Nat). Store posts in a stable map keyed by postId.",
+      "target": "backend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Add delete profile option"
+          "Add page what's on your mind where they can upload posts and thoughts and their content"
         ]
       },
       "acceptanceCriteria": [
-        "A 'Delete Profile' button is visible to the authenticated user in the profile area.",
-        "Clicking 'Delete Profile' opens a confirmation dialog warning the user that the action is irreversible.",
-        "Confirming deletion calls the backend to remove the user's profile data.",
-        "After successful deletion, the user is logged out and redirected to the feed page.",
-        "The backend exposes a deleteProfile endpoint that removes the caller's profile record."
+        "Post data type is defined with all required fields",
+        "Posts are stored in stable memory so they survive upgrades",
+        "Each post has a unique identifier"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add an optional 'Delete Content' button to each content item that the authenticated user owns. The button should only be visible to the content owner. Clicking it must show a confirmation dialog before permanently deleting the content item. After deletion, the content item should be removed from the feed.",
-      "target": "both",
+      "text": "Expose the following backend update and query functions for posts: createPost (takes textContent and optional media blob + mimeType, stores post under caller's principal), deletePost (caller can only delete their own posts), getAllPosts (returns all posts sorted by createdAt descending), getPostsByUser (returns posts for a given principal), and likePost (increments like count for a post).",
+      "target": "backend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "delete content optional button"
+          "upload posts and thoughts and their content"
         ]
       },
       "acceptanceCriteria": [
-        "A 'Delete Content' button is rendered on content cards and/or the content detail page only when the authenticated user is the content owner.",
-        "Clicking 'Delete Content' opens a confirmation dialog before any deletion occurs.",
-        "Confirming deletion calls the backend to permanently remove the content item.",
-        "After successful deletion, the content is removed from the feed and any related UI (e.g., queue, detail page) without requiring a full page reload.",
-        "The backend exposes a deleteContent endpoint that accepts a content ID and only allows deletion by the content owner."
+        "createPost stores a post and returns the new postId",
+        "deletePost rejects callers who are not the post author",
+        "getAllPosts returns posts in reverse chronological order",
+        "getPostsByUser filters posts by a given principal",
+        "likePost increments the like counter and returns the new count"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Add React Query hooks in useQueries.ts for all post operations: useGetAllPosts, useGetPostsByUser, useCreatePost (mutation), useDeletePost (mutation), and useLikePost (mutation). Invalidate the posts query cache on successful create, delete, or like mutations.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "upload posts and thoughts and their content"
+        ]
+      },
+      "acceptanceCriteria": [
+        "useGetAllPosts fetches all posts and caches them under a 'posts' query key",
+        "useCreatePost mutation calls the backend and invalidates the posts cache on success",
+        "useDeletePost and useLikePost mutations also invalidate the posts cache",
+        "useGetPostsByUser accepts a principal parameter and fetches that user's posts"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Create a new page component at frontend/src/pages/WhatsOnYourMindPage.tsx. The page should include: a prominent heading 'What's on Your Mind?', a text area for typing thoughts or post content (max ~500 characters with a live character counter), an optional media attachment input supporting images and videos (displayed as a preview before posting), a 'Post' submit button (disabled when text is empty and no media is attached, and shows a loading state while posting), and a feed of all posts displayed below the composer in reverse chronological order. Each post card must show: the author's display name and avatar (fetched via existing profile hooks), the post text, an optional media preview, a like button with count, the post timestamp, and a delete button (visible only to the post's author).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Add page what's on your mind where they can upload posts and thoughts and their content"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Page renders a composer area with a text area and optional media upload",
+        "Character counter updates in real time and prevents submission over the limit",
+        "Submitted post appears immediately in the feed after creation",
+        "Post cards show author avatar, display name, text, optional media, like count, and timestamp",
+        "Only the post's author sees the delete button; clicking it removes the post after confirmation",
+        "Like button increments the count optimistically and syncs with the backend",
+        "Page is accessible when the user is not logged in (read-only feed; composer hidden or disabled)"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Register a new route '/mind' for the WhatsOnYourMindPage in frontend/src/App.tsx and add a navigation link labeled 'What's on Your Mind' (or a short variant like 'Mind') to the sticky header in frontend/src/components/Layout.tsx, alongside the existing Feed and Upload links.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Add page what's on your mind"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Navigating to /mind renders the WhatsOnYourMindPage",
+        "The header navigation includes a link to the /mind route",
+        "Active route link is visually highlighted consistently with existing nav links"
       ]
     }
   ],
   "constraints": [
-    "Delete profile and delete content actions must only be available to the authenticated content/profile owner.",
-    "Both destructive actions must require explicit user confirmation before executing.",
-    "Do not edit any files listed under frontend.immutablePaths."
+    "Do not modify any files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
+    "All Motoko logic must remain in the single backend/main.mo actor",
+    "Reuse existing profile picture and display name resolution patterns already present in useQueries.ts"
   ],
   "nonGoals": [
-    "Bulk deletion of multiple content items at once.",
-    "Admin-level deletion of other users' profiles or content.",
-    "Soft-delete or archiving — deletions are permanent."
+    "Real-time feed updates via WebSockets",
+    "Threaded/nested comment replies on posts",
+    "Post editing after submission",
+    "Hashtag or mention parsing",
+    "Separate notification system for likes or comments on posts"
   ],
   "imageRequirements": {
     "required": [],

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import { type ContentMetadata, type UserProfile, type FileType, type Comment, ExternalBlob } from '../backend';
+import { type ContentMetadata, type UserProfile, type FileType, type Comment, type Post, ExternalBlob } from '../backend';
 import { useInternetIdentity } from './useInternetIdentity';
 import type { Principal } from '@dfinity/principal';
 
@@ -37,6 +37,7 @@ export function useSaveCallerUserProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['profilePicture'] });
     },
   });
 }
@@ -56,6 +57,42 @@ export function useEditProfile() {
   });
 }
 
+export function useUpdateProfilePicture() {
+  const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (picture: Uint8Array | null) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.updateProfilePicture(picture);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      if (identity) {
+        queryClient.invalidateQueries({
+          queryKey: ['profilePicture', identity.getPrincipal().toString()],
+        });
+      }
+    },
+  });
+}
+
+export function useGetProfilePicture(principal: Principal | undefined) {
+  const { actor, isFetching: actorFetching } = useActor();
+  const principalStr = principal?.toString();
+
+  return useQuery<Uint8Array | null>({
+    queryKey: ['profilePicture', principalStr],
+    queryFn: async () => {
+      if (!actor || !principal) return null;
+      return actor.getProfilePicture(principal);
+    },
+    enabled: !!actor && !actorFetching && !!principal,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
 export function useDeleteProfile() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -68,6 +105,7 @@ export function useDeleteProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
       queryClient.invalidateQueries({ queryKey: ['allContent'] });
+      queryClient.invalidateQueries({ queryKey: ['profilePicture'] });
     },
   });
 }
@@ -89,6 +127,67 @@ export function useGetUserProfile(principal: Principal | undefined) {
     },
     enabled: !!actor && !actorFetching && !!principal,
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// ─── Follows ──────────────────────────────────────────────────────────────────
+
+export function useIsFollowing(targetPrincipal: Principal | undefined) {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  const targetStr = targetPrincipal?.toString();
+
+  return useQuery<boolean>({
+    queryKey: ['isFollowing', targetStr, identity?.getPrincipal().toString()],
+    queryFn: async () => {
+      if (!actor || !targetPrincipal) return false;
+      return actor.isFollowing(targetPrincipal);
+    },
+    enabled: !!actor && !actorFetching && !!targetPrincipal && !!identity,
+  });
+}
+
+export function useFollowUser() {
+  const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (target: Principal) => {
+      if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
+      return actor.followUser(target);
+    },
+    onSuccess: (_data, target) => {
+      const targetStr = target.toString();
+      const callerStr = identity?.getPrincipal().toString();
+      queryClient.invalidateQueries({ queryKey: ['isFollowing', targetStr] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', targetStr] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', callerStr] });
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
+  });
+}
+
+export function useUnfollowUser() {
+  const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (target: Principal) => {
+      if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
+      return actor.unfollowUser(target);
+    },
+    onSuccess: (_data, target) => {
+      const targetStr = target.toString();
+      const callerStr = identity?.getPrincipal().toString();
+      queryClient.invalidateQueries({ queryKey: ['isFollowing', targetStr] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', targetStr] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', callerStr] });
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
   });
 }
 
@@ -342,6 +441,89 @@ export function useDeleteComment() {
       queryClient.invalidateQueries({ queryKey: ['comments', contentId] });
       queryClient.invalidateQueries({ queryKey: ['content', contentId] });
       queryClient.invalidateQueries({ queryKey: ['allContent'] });
+    },
+  });
+}
+
+// ─── Posts / Thoughts ─────────────────────────────────────────────────────────
+
+export function useGetAllPosts() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<Post[]>({
+    queryKey: ['allPosts'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllThoughts();
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+export function useGetPostsByUser(principal: Principal | undefined) {
+  const { actor, isFetching: actorFetching } = useActor();
+  const principalStr = principal?.toString();
+
+  return useQuery<Post[]>({
+    queryKey: ['userPosts', principalStr],
+    queryFn: async () => {
+      if (!actor || !principal) return [];
+      return actor.getThoughtsByUser(principal);
+    },
+    enabled: !!actor && !actorFetching && !!principal,
+  });
+}
+
+export function useCreatePost() {
+  const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ content, media }: { content: string; media: ExternalBlob | null }) => {
+      if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
+      return actor.createThought(content, media);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['userPosts'] });
+    },
+  });
+}
+
+export function useDeletePost() {
+  const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (thoughtId: bigint) => {
+      if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
+      return actor.deleteThought(thoughtId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['userPosts'] });
+    },
+  });
+}
+
+export function useLikePost() {
+  const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (thoughtId: bigint) => {
+      if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
+      return actor.likeThought(thoughtId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['userPosts'] });
     },
   });
 }
