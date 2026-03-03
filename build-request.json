@@ -1,118 +1,57 @@
 {
   "kind": "build_request",
-  "title": "Add 'What's on Your Mind' post/thought upload page",
-  "projectName": "Arena",
+  "title": "Add keyboard send (Enter key) and Send button to message input",
+  "projectName": "The Arena",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a backend data model for posts/thoughts with fields: postId (UUID or Nat), authorPrincipal, textContent (String), optionalMediaBlob (optional blob for image/video), optionalMediaMimeType (optional Text), createdAt (Int timestamp), and likes (Nat). Store posts in a stable map keyed by postId.",
-      "target": "backend",
+      "text": "In the ConversationView component, update the message input area so that pressing the Enter key (without Shift) submits and sends the message, while Shift+Enter inserts a newline.",
+      "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Add page what's on your mind where they can upload posts and thoughts and their content"
+          "Add keyboard and send tab to message"
         ]
       },
       "acceptanceCriteria": [
-        "Post data type is defined with all required fields",
-        "Posts are stored in stable memory so they survive upgrades",
-        "Each post has a unique identifier"
+        "Pressing Enter in the message input field sends the message without requiring a button click.",
+        "Pressing Shift+Enter inserts a newline in the message input instead of sending.",
+        "After sending via Enter, the input field is cleared."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Expose the following backend update and query functions for posts: createPost (takes textContent and optional media blob + mimeType, stores post under caller's principal), deletePost (caller can only delete their own posts), getAllPosts (returns all posts sorted by createdAt descending), getPostsByUser (returns posts for a given principal), and likePost (increments like count for a post).",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "upload posts and thoughts and their content"
-        ]
-      },
-      "acceptanceCriteria": [
-        "createPost stores a post and returns the new postId",
-        "deletePost rejects callers who are not the post author",
-        "getAllPosts returns posts in reverse chronological order",
-        "getPostsByUser filters posts by a given principal",
-        "likePost increments the like counter and returns the new count"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Add React Query hooks in useQueries.ts for all post operations: useGetAllPosts, useGetPostsByUser, useCreatePost (mutation), useDeletePost (mutation), and useLikePost (mutation). Invalidate the posts query cache on successful create, delete, or like mutations.",
+      "text": "In the ConversationView component, ensure a visible 'Send' button is displayed alongside the message input. The button must be clearly styled and clickable to submit the message, consistent with the Arena neon dark theme.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "upload posts and thoughts and their content"
+          "Add keyboard and send tab to message"
         ]
       },
       "acceptanceCriteria": [
-        "useGetAllPosts fetches all posts and caches them under a 'posts' query key",
-        "useCreatePost mutation calls the backend and invalidates the posts cache on success",
-        "useDeletePost and useLikePost mutations also invalidate the posts cache",
-        "useGetPostsByUser accepts a principal parameter and fetches that user's posts"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Create a new page component at frontend/src/pages/WhatsOnYourMindPage.tsx. The page should include: a prominent heading 'What's on Your Mind?', a text area for typing thoughts or post content (max ~500 characters with a live character counter), an optional media attachment input supporting images and videos (displayed as a preview before posting), a 'Post' submit button (disabled when text is empty and no media is attached, and shows a loading state while posting), and a feed of all posts displayed below the composer in reverse chronological order. Each post card must show: the author's display name and avatar (fetched via existing profile hooks), the post text, an optional media preview, a like button with count, the post timestamp, and a delete button (visible only to the post's author).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Add page what's on your mind where they can upload posts and thoughts and their content"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Page renders a composer area with a text area and optional media upload",
-        "Character counter updates in real time and prevents submission over the limit",
-        "Submitted post appears immediately in the feed after creation",
-        "Post cards show author avatar, display name, text, optional media, like count, and timestamp",
-        "Only the post's author sees the delete button; clicking it removes the post after confirmation",
-        "Like button increments the count optimistically and syncs with the backend",
-        "Page is accessible when the user is not logged in (read-only feed; composer hidden or disabled)"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Register a new route '/mind' for the WhatsOnYourMindPage in frontend/src/App.tsx and add a navigation link labeled 'What's on Your Mind' (or a short variant like 'Mind') to the sticky header in frontend/src/components/Layout.tsx, alongside the existing Feed and Upload links.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Add page what's on your mind"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Navigating to /mind renders the WhatsOnYourMindPage",
-        "The header navigation includes a link to the /mind route",
-        "Active route link is visually highlighted consistently with existing nav links"
+        "A Send button is visible next to the message text input at all times.",
+        "Clicking the Send button submits the current message.",
+        "The Send button is disabled when the input is empty.",
+        "After sending via the button, the input field is cleared and focus returns to the input."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
-    "All Motoko logic must remain in the single backend/main.mo actor",
-    "Reuse existing profile picture and display name resolution patterns already present in useQueries.ts"
+    "Do not modify any files under frontend/src/hooks/ (immutable paths).",
+    "Do not modify frontend/src/components/ui/ components.",
+    "Preserve existing message sending logic and React Query mutations in ConversationView."
   ],
   "nonGoals": [
-    "Real-time feed updates via WebSockets",
-    "Threaded/nested comment replies on posts",
-    "Post editing after submission",
-    "Hashtag or mention parsing",
-    "Separate notification system for likes or comments on posts"
+    "Adding real-time/WebSocket message delivery.",
+    "Changing backend messaging API or data models.",
+    "Adding emoji picker or file attachment to the message input.",
+    "Modifying the conversation list panel layout."
   ],
   "imageRequirements": {
     "required": [],

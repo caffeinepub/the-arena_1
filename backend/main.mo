@@ -1,4 +1,3 @@
-import Storage "blob-storage/Storage";
 import Array "mo:core/Array";
 import Int "mo:core/Int";
 import Iter "mo:core/Iter";
@@ -8,8 +7,8 @@ import Order "mo:core/Order";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
 import Set "mo:core/Set";
+import Storage "blob-storage/Storage";
 import Time "mo:core/Time";
-
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
@@ -17,24 +16,15 @@ import MixinStorage "blob-storage/Mixin";
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
-
   type ContentId = Text;
   type CommentId = Nat;
   type PostId = Nat;
-
-  type FileType = {
-    #audioMp3;
-    #audioWav;
-    #videoMP4;
-    #videoWebM;
-    #videoMov;
-  };
 
   type ContentMetadata = {
     id : ContentId;
     title : Text;
     description : Text;
-    fileType : FileType;
+    mimeType : Text;
     uploader : Principal;
     uploadTime : Int;
     views : Nat;
@@ -79,29 +69,147 @@ actor {
   let followees = Map.empty<Principal, Set.Set<Principal>>();
   var nextCommentId : CommentId = 0;
 
-  // Social/Thoughts functionality
-  public type Post = {
-    id : PostId;
-    author : Principal;
-    timestamp : Int;
-    content : Text;
-    media : ?Storage.ExternalBlob;
-    likes : Nat;
+  // ========================= Messaging Feature =========================
+  public type Participants = {
+    user1 : Principal;
+    user2 : Principal;
   };
 
-  let posts = Map.empty<PostId, Post>();
-  var nextPostId : PostId = 1;
+  module Participants {
+    public func compare(a : Participants, b : Participants) : Order.Order {
+      switch (Principal.compare(a.user1, b.user1)) {
+        case (#equal) { Principal.compare(a.user2, b.user2) };
+        case (other) { other };
+      };
+    };
 
-  module Post {
-    public func compareByTime(post1 : Post, post2 : Post) : Order.Order {
-      Int.compare(post2.timestamp, post1.timestamp);
+    public func create(p1 : Principal, p2 : Principal) : Participants {
+      if (p1.toText() < p2.toText()) {
+        { user1 = p1; user2 = p2 };
+      } else {
+        { user1 = p2; user2 = p1 };
+      };
     };
   };
 
-  include MixinStorage();
+  public type Message = {
+    sender : Principal;
+    recipient : Principal;
+    timestamp : Int;
+    content : Text;
+    isRead : Bool;
+  };
+
+  public type Conversation = {
+    participants : Participants;
+    messages : [Message];
+  };
+
+  let conversations = Map.empty<Participants, List.List<Message>>();
+
+  public shared ({ caller }) func sendMessage(recipient : Principal, content : Text) : async Message {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can send messages");
+    };
+
+    let message : Message = {
+      sender = caller;
+      recipient;
+      timestamp = Time.now();
+      content;
+      isRead = false;
+    };
+
+    let participants = Participants.create(caller, recipient);
+
+    let messagesList = switch (conversations.get(participants)) {
+      case (null) { List.empty<Message>() };
+      case (?existingMessages) { existingMessages };
+    };
+
+    messagesList.add(message);
+    conversations.add(participants, messagesList);
+    message;
+  };
+
+  public query ({ caller }) func getConversations() : async [Conversation] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can fetch conversations");
+    };
+
+    let allConversations = conversations.toArray();
+
+    let filteredConversations = allConversations.filter(
+      func((participants, _)) {
+        participants.user1 == caller or participants.user2 == caller;
+      }
+    );
+
+    filteredConversations.map(
+      func((participants, messageList)) {
+        {
+          participants;
+          messages = messageList.reverse().toArray();
+        };
+      }
+    );
+  };
+
+  public query ({ caller }) func getMessages(partner : Principal) : async ?[Message] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can fetch messages");
+    };
+
+    let participants = Participants.create(caller, partner);
+
+    switch (conversations.get(participants)) {
+      case (null) { null };
+      case (?messagesList) { ?messagesList.reverse().toArray() };
+    };
+  };
+
+  public shared ({ caller }) func markMessageAsRead(conversationKey : Participants, messageIndex : Nat) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can mark messages as read");
+    };
+
+    if (conversationKey.user1 != caller and conversationKey.user2 != caller) {
+      Runtime.trap("Unauthorized: Only participants can mark messages as read");
+    };
+
+    switch (conversations.get(conversationKey)) {
+      case (null) {
+        Runtime.trap("Conversation not found");
+      };
+      case (?messagesList) {
+        if (messageIndex >= messagesList.size()) {
+          Runtime.trap("Message index out of bounds");
+        };
+
+        let arrayRep = messagesList.toArray();
+        let updatedArray = Array.tabulate(
+          arrayRep.size(),
+          func(i) {
+            if (i == messageIndex) {
+              let message = arrayRep[i];
+              { message with isRead = true };
+            } else {
+              arrayRep[i];
+            };
+          },
+        );
+
+        let updatedList = List.empty<Message>();
+        for (msg in updatedArray.values()) {
+          updatedList.add(msg);
+        };
+
+        conversations.add(conversationKey, updatedList);
+      };
+    };
+  };
 
   // ========================= Follow Functionality =========================
-
   public shared ({ caller }) func followUser(target : Principal) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can follow others");
@@ -350,7 +458,7 @@ actor {
   // Content search criteria
   public type SearchCriteria = {
     #byUploader : Principal;
-    #byFileType : FileType;
+    #byMimeType : Text;
     #mostPopular;
     #recent;
   };
@@ -363,9 +471,9 @@ actor {
           func(content) { content.uploader == uploader }
         );
       };
-      case (#byFileType(fileType)) {
+      case (#byMimeType(mimeType)) {
         contentMap.values().filter(
-          func(content) { content.fileType == fileType }
+          func(content) { content.mimeType == mimeType }
         );
       };
       case (#mostPopular) {
@@ -397,7 +505,7 @@ actor {
     id : Text,
     title : Text,
     description : Text,
-    fileType : FileType,
+    mimeType : Text,
     contentBlob : Storage.ExternalBlob,
     thumbnailBlob : ?Storage.ExternalBlob,
     albumCoverBlob : ?Storage.ExternalBlob,
@@ -409,7 +517,7 @@ actor {
       id;
       title;
       description;
-      fileType;
+      mimeType;
       uploader = caller;
       uploadTime = Time.now();
       views = 0;
@@ -684,6 +792,24 @@ actor {
 
   // ========================= Social/Thoughts Functionality =========================
 
+  public type Post = {
+    id : PostId;
+    author : Principal;
+    timestamp : Int;
+    content : Text;
+    media : ?Storage.ExternalBlob;
+    likes : Nat;
+  };
+
+  module Post {
+    public func compareByTime(post1 : Post, post2 : Post) : Order.Order {
+      Int.compare(post2.timestamp, post1.timestamp);
+    };
+  };
+
+  let posts = Map.empty<PostId, Post>();
+  var nextPostId : PostId = 1;
+
   public shared ({ caller }) func createThought(content : Text, media : ?Storage.ExternalBlob) : async PostId {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("You are not authorized to perform this action");
@@ -799,4 +925,78 @@ actor {
     let thoughts = posts.values().toArray();
     thoughts.filter(func(thought) { thought.author == user });
   };
+
+  // Thought comment functionality for social posts
+  public type ThoughtComment = {
+    id : CommentId;
+    postId : PostId;
+    author : Principal;
+    timestamp : Int;
+    text : Text;
+  };
+
+  let thoughtComments = Map.empty<PostId, Map.Map<CommentId, ThoughtComment>>();
+
+  public shared ({ caller }) func addThoughtComment(postId : PostId, text : Text) : async CommentId {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can comment on thoughts");
+    };
+
+    let comment : ThoughtComment = {
+      id = nextCommentId;
+      postId;
+      author = caller;
+      timestamp = Time.now();
+      text;
+    };
+
+    switch (thoughtComments.get(postId)) {
+      case (null) {
+        let newComments = Map.empty<CommentId, ThoughtComment>();
+        newComments.add(nextCommentId, comment);
+        thoughtComments.add(postId, newComments);
+      };
+      case (?existingComments) {
+        existingComments.add(nextCommentId, comment);
+      };
+    };
+
+    let currentId = nextCommentId;
+    nextCommentId += 1;
+    currentId;
+  };
+
+  public query ({ caller }) func getThoughtComments(postId : PostId) : async [ThoughtComment] {
+    switch (thoughtComments.get(postId)) {
+      case (null) { [] };
+      case (?existingComments) {
+        existingComments.values().toArray();
+      };
+    };
+  };
+
+  // Delete comment: only the author or an admin can delete
+  public shared ({ caller }) func deleteThoughtComment(postId : PostId, commentId : CommentId) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can delete comments");
+    };
+
+    let existingComments = switch (thoughtComments.get(postId)) {
+      case (null) { Runtime.trap("Comments not found for post") };
+      case (?comments) { comments };
+    };
+
+    let comment = switch (existingComments.get(commentId)) {
+      case (null) { Runtime.trap("Comment not found") };
+      case (?comment) { comment };
+    };
+
+    if (caller != comment.author and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only delete your own comments");
+    };
+
+    existingComments.remove(commentId);
+  };
+
+  include MixinStorage();
 };

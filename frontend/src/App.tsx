@@ -7,6 +7,7 @@ import ContentDetailPage from './pages/ContentDetailPage';
 import ProfileSetupModal from './pages/ProfileSetupModal';
 import UserProfilePage from './pages/UserProfilePage';
 import WhatsOnYourMindPage from './pages/WhatsOnYourMindPage';
+import MessagesPage from './pages/MessagesPage';
 import { useInternetIdentity } from './hooks/useInternetIdentity';
 import { useGetCallerUserProfile } from './hooks/useQueries';
 
@@ -62,12 +63,24 @@ const mindRoute = createRoute({
   component: WhatsOnYourMindPage,
 });
 
+const messagesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/messages',
+  component: MessagesPage,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      partner: typeof search.partner === 'string' ? search.partner : undefined,
+    };
+  },
+});
+
 const routeTree = rootRoute.addChildren([
   feedRoute,
   uploadRoute,
   contentDetailRoute,
   userProfileRoute,
   mindRoute,
+  messagesRoute,
 ]);
 
 const router = createRouter({ routeTree });

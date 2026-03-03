@@ -10,7 +10,6 @@ import {
   useDeleteContent,
 } from '../hooks/useQueries';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { FileType } from '../backend';
 import MediaPlayer from '../components/MediaPlayer';
 import CommentsSection from '../components/CommentsSection';
 import ConfirmationDialog from '../components/ConfirmationDialog';
@@ -29,16 +28,26 @@ function formatDate(uploadTime: bigint): string {
   });
 }
 
-function getFileTypeLabel(fileType: FileType): { label: string; isAudio: boolean } {
-  const isAudio = fileType === FileType.audioMp3 || fileType === FileType.audioWav;
-  const labels: Record<FileType, string> = {
-    [FileType.audioMp3]: 'MP3',
-    [FileType.audioWav]: 'WAV',
-    [FileType.videoMP4]: 'MP4',
-    [FileType.videoWebM]: 'WebM',
-    [FileType.videoMov]: 'MOV',
+function getMimeInfo(mimeType: string): { label: string; isAudio: boolean } {
+  const isAudio = mimeType.startsWith('audio/');
+  const map: Record<string, string> = {
+    'audio/mpeg': 'MP3',
+    'audio/mp3': 'MP3',
+    'audio/wav': 'WAV',
+    'audio/x-wav': 'WAV',
+    'audio/aac': 'AAC',
+    'audio/ogg': 'OGG',
+    'audio/flac': 'FLAC',
+    'video/mp4': 'MP4',
+    'video/webm': 'WebM',
+    'video/quicktime': 'MOV',
+    'video/x-msvideo': 'AVI',
+    'video/x-matroska': 'MKV',
+    'video/x-flv': 'FLV',
+    'video/x-ms-wmv': 'WMV',
   };
-  return { label: labels[fileType] ?? 'Media', isAudio };
+  const label = map[mimeType] ?? (mimeType.split('/')[1]?.toUpperCase().slice(0, 6) ?? 'Media');
+  return { label, isAudio };
 }
 
 export default function ContentDetailPage() {
@@ -68,7 +77,6 @@ export default function ContentDetailPage() {
   useEffect(() => {
     if (window.location.hash === '#comments') {
       setShowComments(true);
-      // Scroll to comments after a short delay to allow render
       setTimeout(() => {
         commentsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 150);
@@ -161,7 +169,16 @@ export default function ContentDetailPage() {
     );
   }
 
-  const { label, isAudio } = getFileTypeLabel(content.fileType);
+  const { label, isAudio } = getMimeInfo(content.mimeType);
+
+  // Build the track object for MediaPlayer
+  const track = {
+    id: content.id,
+    title: content.title,
+    mimeType: content.mimeType,
+    url: content.contentBlob.getDirectURL(),
+    thumbnailUrl: content.albumCoverBlob?.getDirectURL() ?? content.thumbnailBlob?.getDirectURL(),
+  };
 
   return (
     <>
@@ -180,11 +197,8 @@ export default function ContentDetailPage() {
         {/* Media player */}
         <div className="mb-6">
           <MediaPlayer
-            contentBlob={content.contentBlob}
-            fileType={content.fileType}
-            albumCoverBlob={content.albumCoverBlob}
-            title={content.title}
-            onPlayNext={nextContentId ? handlePlayNext : undefined}
+            track={track}
+            onNext={nextContentId ? handlePlayNext : undefined}
             hasNext={!!nextContentId}
           />
         </div>

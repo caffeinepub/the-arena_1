@@ -1,63 +1,38 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add 'What's on Your Mind' post/thought upload page",
+  "title": "Add keyboard send (Enter key) and Send button to message input",
   "requirements": [
     {
-      "id": "REQ-3",
-      "summary": "Add React Query hooks for all post operations with cache invalidation",
+      "id": "REQ-1",
+      "summary": "Update message input in ConversationView to support Enter key to send (Shift+Enter for newline)",
       "acceptanceCriteria": [
-        "useGetAllPosts fetches all posts and caches them under a 'posts' query key",
-        "useCreatePost mutation calls the backend and invalidates the posts cache on success",
-        "useDeletePost and useLikePost mutations also invalidate the posts cache",
-        "useGetPostsByUser accepts a principal parameter and fetches that user's posts"
+        "Pressing Enter in the message input field sends the message without requiring a button click.",
+        "Pressing Shift+Enter inserts a newline in the message input instead of sending.",
+        "After sending via Enter, the input field is cleared."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/components/ConversationView.tsx",
           "operation": "modify",
-          "description": "Add React Query hooks for post operations: useGetAllPosts (query hook fetching all posts from backend.getAllThoughts(), cached under 'allPosts' key), useGetPostsByUser (query hook fetching posts for a given principal via backend.getThoughtsByUser(user), cached under ['userPosts', principal]), useCreatePost (mutation hook calling backend.createThought(content, media) and invalidating 'allPosts' and 'userPosts' caches on success), useDeletePost (mutation hook calling backend.deleteThought(thoughtId) and invalidating caches on success), and useLikePost (mutation hook calling backend.likeThought(thoughtId) and invalidating caches on success). Follow the existing query/mutation patterns in the file for error handling and cache invalidation."
+          "description": "Add onKeyDown event handler to the message input textarea that detects Enter key presses. If Enter is pressed without Shift, prevent default behavior, trigger the sendMessage mutation (only if input is non-empty), and clear the input. If Shift+Enter is pressed, allow default newline insertion behavior."
         }
       ]
     },
     {
-      "id": "REQ-4",
-      "summary": "Create the What's on Your Mind page with composer and post feed",
+      "id": "REQ-2",
+      "summary": "Add a visible Send button alongside the message input in ConversationView",
       "acceptanceCriteria": [
-        "Page renders a composer area with a text area and optional media upload",
-        "Character counter updates in real time and prevents submission over the limit",
-        "Submitted post appears immediately in the feed after creation",
-        "Post cards show author avatar, display name, text, optional media, like count, and timestamp",
-        "Only the post's author sees the delete button; clicking it removes the post after confirmation",
-        "Like button increments the count optimistically and syncs with the backend",
-        "Page is accessible when the user is not logged in (read-only feed; composer hidden or disabled)"
+        "A Send button is visible next to the message text input at all times.",
+        "Clicking the Send button submits the current message.",
+        "The Send button is disabled when the input is empty.",
+        "After sending via the button, the input field is cleared and focus returns to the input."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/WhatsOnYourMindPage.tsx",
-          "operation": "create",
-          "description": "Create a new page component featuring: a prominent 'What's on Your Mind?' heading, a composer section (visible only when authenticated) with a textarea for post content (max 500 characters with live character counter displayed), an optional media upload button using FileUploadInput component (supports images and videos, shows preview), a 'Post' submit button (disabled when both text is empty and no media is attached, shows loading state during submission via useCreatePost mutation), and below the composer, a scrollable feed of all posts fetched via useGetAllPosts in reverse chronological order. Each post card must display: the author's display name and avatar (resolved using getUserProfile and getProfilePicture hooks with the author principal), the post text content, an optional media preview (if post.media exists, use post.media.getDirectURL() for images/videos), a like button with the current like count (clicking calls useLikePost mutation with optimistic update), a timestamp formatted as relative time (e.g., '2 hours ago'), and a delete button visible only when the current user's identity principal matches the post's author principal (clicking shows a ConfirmationDialog before calling useDeletePost mutation). When not authenticated, hide the composer and show a message prompting the user to log in to post. Use the authorization component's useInternetIdentity hook to check authentication status and get the current user's principal for ownership checks. For media uploads, use ExternalBlob.fromBytes() to wrap the file data before passing to the backend. Verify the authorization and blob-storage component usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Register the /mind route and add navigation link to the header",
-      "acceptanceCriteria": [
-        "Navigating to /mind renders the WhatsOnYourMindPage",
-        "The header navigation includes a link to the /mind route",
-        "Active route link is visually highlighted consistently with existing nav links"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/components/ConversationView.tsx",
           "operation": "modify",
-          "description": "Import WhatsOnYourMindPage and register a new route at path '/mind' in the TanStack Router configuration, rendering the WhatsOnYourMindPage component. Follow the existing route registration pattern used for Feed, Upload, ContentDetail, and UserProfile routes."
-        },
-        {
-          "path": "frontend/src/components/Layout.tsx",
-          "operation": "modify",
-          "description": "Add a new navigation link labeled 'Mind' (or 'What's on Your Mind') to the sticky header navigation menu, positioned alongside the existing Feed and Upload links. The link should navigate to '/mind' and use the same active-state highlighting logic as the other nav links (checking window.location.pathname and applying active styles). Ensure the link is visible in both mobile and desktop layouts."
+          "description": "Add a Send button adjacent to the message textarea in the input area. Style the button consistently with the Arena neon dark theme using existing design tokens (e.g., arena-accent color, neon glow effects). Disable the button when the message input is empty (trimmed). On click, invoke the sendMessage mutation, clear the input, and return focus to the textarea. Ensure the button layout integrates smoothly with the existing message input container (e.g., flex row with textarea and button side-by-side)."
         }
       ]
     }

@@ -1,17 +1,25 @@
 import { useState } from 'react';
 import { Link, useLocation, useRouterState } from '@tanstack/react-router';
-import { Upload, Tv2, Heart, ListMusic, MessageSquare } from 'lucide-react';
+import { Upload, Tv2, Heart, ListMusic, MessageSquare, Mail } from 'lucide-react';
 import LoginButton from './LoginButton';
 import ProfileMenu from './ProfileMenu';
 import QueuePanel from './QueuePanel';
-import { useGetPlaybackQueue } from '../hooks/useQueries';
+import { useGetPlaybackQueue, useGetConversations } from '../hooks/useQueries';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
+
+interface NavLink {
+  to: string;
+  label: string;
+  icon: React.ReactNode;
+  badge?: number;
+}
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [queueOpen, setQueueOpen] = useState(false);
   const { data: queue = [] } = useGetPlaybackQueue();
   const { identity } = useInternetIdentity();
+  const { data: conversations = [] } = useGetConversations();
 
   // Extract currently playing content ID from the route if on a content detail page
   const routerState = useRouterState();
@@ -19,11 +27,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const contentDetailMatch = currentPath.match(/^\/content\/(.+)$/);
   const currentlyPlayingContentId = contentDetailMatch ? contentDetailMatch[1] : undefined;
 
-  const navLinks = [
+  const callerPrincipalStr = identity?.getPrincipal().toString() ?? '';
+  const totalUnread = conversations.reduce((acc, conv) => {
+    return acc + conv.messages.filter(
+      (m) => !m.isRead && m.recipient.toString() === callerPrincipalStr
+    ).length;
+  }, 0);
+
+  const navLinks: NavLink[] = [
     { to: '/', label: 'Feed', icon: <Tv2 className="w-4 h-4" /> },
     { to: '/upload', label: 'Upload', icon: <Upload className="w-4 h-4" /> },
     { to: '/mind', label: 'Mind', icon: <MessageSquare className="w-4 h-4" /> },
   ];
+
+  if (identity) {
+    navLinks.push({
+      to: '/messages',
+      label: 'Messages',
+      icon: <Mail className="w-4 h-4" />,
+      badge: totalUnread,
+    });
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -56,11 +80,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <nav className="hidden sm:flex items-center gap-1">
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.to;
+                const badge = link.badge ?? 0;
                 return (
                   <Link
                     key={link.to}
                     to={link.to}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
+                    className={`relative flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
                       isActive
                         ? 'bg-arena-neon/10 text-arena-neon border border-arena-neon/30 neon-glow-sm'
                         : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
@@ -68,6 +93,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   >
                     {link.icon}
                     {link.label}
+                    {badge > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] flex items-center justify-center bg-arena-neon text-arena-darker text-[9px] font-bold rounded-full px-0.5 leading-none">
+                        {badge > 99 ? '99+' : badge}
+                      </span>
+                    )}
                   </Link>
                 );
               })}
@@ -99,11 +129,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.to;
+              const badge = link.badge ?? 0;
               return (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all ${
+                  className={`relative flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all ${
                     isActive
                       ? 'text-arena-neon border-b-2 border-arena-neon'
                       : 'text-muted-foreground'
@@ -111,6 +142,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 >
                   {link.icon}
                   {link.label}
+                  {badge > 0 && (
+                    <span className="absolute top-1.5 right-1/4 min-w-[14px] h-[14px] flex items-center justify-center bg-arena-neon text-arena-darker text-[8px] font-bold rounded-full px-0.5">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

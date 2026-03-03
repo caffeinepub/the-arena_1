@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Music, Video, Heart, MessageCircle, Eye, ListPlus, Trash2 } from 'lucide-react';
-import { ContentMetadata, FileType } from '../backend';
+import { ContentMetadata } from '../backend';
 import { useAddToQueue, useToggleLike, useHasUserLikedContent, useDeleteContent } from '../hooks/useQueries';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import ConfirmationDialog from './ConfirmationDialog';
@@ -12,25 +12,50 @@ interface ContentCardProps {
   uploaderName?: string;
 }
 
-function getFileTypeBadge(fileType: FileType) {
-  switch (fileType) {
-    case FileType.audioMp3:
-      return { label: 'MP3', icon: <Music className="w-3 h-3" />, color: 'text-arena-neon border-arena-neon/50 bg-arena-neon/10' };
-    case FileType.audioWav:
-      return { label: 'WAV', icon: <Music className="w-3 h-3" />, color: 'text-arena-neon border-arena-neon/50 bg-arena-neon/10' };
-    case FileType.videoMP4:
-      return { label: 'MP4', icon: <Video className="w-3 h-3" />, color: 'text-blue-400 border-blue-400/50 bg-blue-400/10' };
-    case FileType.videoWebM:
-      return { label: 'WebM', icon: <Video className="w-3 h-3" />, color: 'text-blue-400 border-blue-400/50 bg-blue-400/10' };
-    case FileType.videoMov:
-      return { label: 'MOV', icon: <Video className="w-3 h-3" />, color: 'text-blue-400 border-blue-400/50 bg-blue-400/10' };
-    default:
-      return { label: 'Media', icon: <Music className="w-3 h-3" />, color: 'text-muted-foreground border-border bg-arena-surface' };
-  }
+function isAudioMime(mimeType: string): boolean {
+  return mimeType.startsWith('audio/');
 }
 
-function isAudioType(fileType: FileType): boolean {
-  return fileType === FileType.audioMp3 || fileType === FileType.audioWav;
+function isVideoMime(mimeType: string): boolean {
+  return mimeType.startsWith('video/');
+}
+
+function getMimeLabel(mimeType: string): string {
+  const map: Record<string, string> = {
+    'audio/mpeg': 'MP3',
+    'audio/mp3': 'MP3',
+    'audio/wav': 'WAV',
+    'audio/x-wav': 'WAV',
+    'audio/aac': 'AAC',
+    'audio/ogg': 'OGG',
+    'audio/flac': 'FLAC',
+    'video/mp4': 'MP4',
+    'video/webm': 'WebM',
+    'video/quicktime': 'MOV',
+    'video/x-msvideo': 'AVI',
+    'video/x-matroska': 'MKV',
+    'video/x-flv': 'FLV',
+    'video/x-ms-wmv': 'WMV',
+  };
+  if (map[mimeType]) return map[mimeType];
+  // Derive from mime subtype
+  const sub = mimeType.split('/')[1];
+  if (sub) return sub.toUpperCase().slice(0, 6);
+  return 'Media';
+}
+
+function getFileTypeBadge(mimeType: string) {
+  const isAudio = isAudioMime(mimeType);
+  const isVideo = isVideoMime(mimeType);
+  const label = getMimeLabel(mimeType);
+
+  if (isAudio) {
+    return { label, icon: <Music className="w-3 h-3" />, color: 'text-arena-neon border-arena-neon/50 bg-arena-neon/10' };
+  }
+  if (isVideo) {
+    return { label, icon: <Video className="w-3 h-3" />, color: 'text-blue-400 border-blue-400/50 bg-blue-400/10' };
+  }
+  return { label, icon: <Music className="w-3 h-3" />, color: 'text-muted-foreground border-border bg-arena-surface' };
 }
 
 function getThumbnailUrl(content: ContentMetadata): string {
@@ -40,7 +65,7 @@ function getThumbnailUrl(content: ContentMetadata): string {
   if (content.albumCoverBlob) {
     return content.albumCoverBlob.getDirectURL();
   }
-  if (isAudioType(content.fileType)) {
+  if (isAudioMime(content.mimeType)) {
     return '/assets/generated/default-audio-thumb.dim_400x400.png';
   }
   return '/assets/generated/default-video-thumb.dim_400x400.png';
@@ -56,7 +81,7 @@ export default function ContentCard({ content, uploaderName }: ContentCardProps)
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const badge = getFileTypeBadge(content.fileType);
+  const badge = getFileTypeBadge(content.mimeType);
   const thumbnailUrl = getThumbnailUrl(content);
 
   const isOwner = identity
@@ -118,7 +143,7 @@ export default function ContentCard({ content, uploaderName }: ContentCardProps)
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             onError={(e) => {
               const target = e.currentTarget;
-              target.src = isAudioType(content.fileType)
+              target.src = isAudioMime(content.mimeType)
                 ? '/assets/generated/default-audio-thumb.dim_400x400.png'
                 : '/assets/generated/default-video-thumb.dim_400x400.png';
             }}

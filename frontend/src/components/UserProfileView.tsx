@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { UserRound, Users, UserCheck, Loader2, ArrowLeft } from 'lucide-react';
+import { UserRound, Users, UserCheck, Loader2, ArrowLeft, MessageCircle } from 'lucide-react';
 import { Principal } from '@dfinity/principal';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -89,6 +89,13 @@ export default function UserProfileView({ targetPrincipal, displayName }: UserPr
     });
   };
 
+  const handleSendMessage = () => {
+    navigate({
+      to: '/messages',
+      search: { partner: targetPrincipal.toString() },
+    });
+  };
+
   const isMutating = followUser.isPending || unfollowUser.isPending;
 
   return (
@@ -172,9 +179,10 @@ export default function UserProfileView({ targetPrincipal, displayName }: UserPr
               )}
             </div>
 
-            {/* Follow / Unfollow button — hidden on own profile */}
+            {/* Action buttons — hidden on own profile */}
             {!isOwnProfile && identity && (
-              <div className="flex-shrink-0">
+              <div className="flex flex-col gap-2 flex-shrink-0">
+                {/* Follow / Unfollow button */}
                 {followStateLoading ? (
                   <Skeleton className="h-9 w-28 rounded-full" />
                 ) : isFollowing ? (
@@ -209,6 +217,16 @@ export default function UserProfileView({ targetPrincipal, displayName }: UserPr
                     )}
                   </Button>
                 )}
+
+                {/* Send Message button */}
+                <Button
+                  onClick={handleSendMessage}
+                  variant="outline"
+                  className="rounded-full border-arena-neon/30 text-arena-neon hover:bg-arena-neon/10 hover:border-arena-neon transition-all min-w-[110px]"
+                >
+                  <MessageCircle className="w-4 h-4 mr-1.5" />
+                  Message
+                </Button>
               </div>
             )}
 

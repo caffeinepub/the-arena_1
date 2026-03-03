@@ -1,164 +1,148 @@
-import React, { useRef, useState, useCallback } from 'react';
-import { Upload, Music, Video, Image, Film, X, FileAudio, FileVideo } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Upload, X, FileVideo, FileAudio, Image, File } from 'lucide-react';
+
+type FileCategory = 'audio' | 'video' | 'image' | 'media' | 'any';
 
 interface FileUploadInputProps {
-  file: File | null;
-  onFileChange: (file: File | null) => void;
-  accept?: string;
-  category?: 'audio' | 'video' | 'image' | 'media';
-  label?: string;
+  category: FileCategory;
+  label: string;
+  onFileSelect: (file: File | null) => void;
+  selectedFile?: File | null;
   className?: string;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function CategoryIcon({ category, className }: { category: FileUploadInputProps['category']; className?: string }) {
+function getFileIcon(category: FileCategory, file?: File | null) {
+  if (file) {
+    const mime = file.type || '';
+    if (mime.startsWith('video/')) return <FileVideo className="w-8 h-8 text-arena-neon" />;
+    if (mime.startsWith('audio/')) return <FileAudio className="w-8 h-8 text-arena-neon" />;
+    if (mime.startsWith('image/')) return <Image className="w-8 h-8 text-arena-neon" />;
+    return <File className="w-8 h-8 text-arena-neon" />;
+  }
   switch (category) {
-    case 'audio': return <Music className={className} />;
-    case 'video': return <Film className={className} />;
-    case 'image': return <Image className={className} />;
-    case 'media':
-    default:
-      return (
-        <span className="flex gap-1 items-center">
-          <FileAudio className={className} />
-          <FileVideo className={className} />
-        </span>
-      );
+    case 'audio': return <FileAudio className="w-8 h-8 text-arena-neon" />;
+    case 'video': return <FileVideo className="w-8 h-8 text-arena-neon" />;
+    case 'image': return <Image className="w-8 h-8 text-arena-neon" />;
+    default: return <Upload className="w-8 h-8 text-arena-neon" />;
   }
 }
 
-function FileTypeIcon({ file }: { file: File }) {
-  const mime = file.type.toLowerCase();
-  if (mime.startsWith('audio/')) return <Music className="w-5 h-5 text-arena-neon" />;
-  if (mime.startsWith('video/')) return <Video className="w-5 h-5 text-arena-neon" />;
-  if (mime.startsWith('image/')) return <Image className="w-5 h-5 text-arena-neon" />;
-  return <Upload className="w-5 h-5 text-arena-neon" />;
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+function getHintText(category: FileCategory): string {
+  switch (category) {
+    case 'audio': return 'All audio formats supported (MP3, WAV, FLAC, AAC, OGG, etc.)';
+    case 'video': return 'All video formats supported (MP4, MKV, AVI, MOV, WebM, FLV, WMV, etc.)';
+    case 'image': return 'All image formats supported (JPG, PNG, GIF, WebP, etc.)';
+    case 'media': return 'All audio and video formats supported';
+    default: return 'All file formats supported — no size limits';
+  }
 }
 
 export default function FileUploadInput({
-  file,
-  onFileChange,
-  accept,
-  category = 'media',
+  category,
   label,
+  onFileSelect,
+  selectedFile,
   className = '',
 }: FileUploadInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [dragging, setDragging] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setDragging(false);
-      const dropped = e.dataTransfer.files[0];
-      if (dropped) onFileChange(dropped);
-    },
-    [onFileChange]
-  );
+  const handleClick = () => {
+    inputRef.current?.click();
+  };
 
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    onFileSelect(file);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragging(true);
-  }, []);
+    setIsDragging(true);
+  };
 
-  const handleDragLeave = useCallback(() => setDragging(false), []);
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
 
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const selected = e.target.files?.[0] ?? null;
-      onFileChange(selected);
-      // Reset input so same file can be re-selected
-      e.target.value = '';
-    },
-    [onFileChange]
-  );
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0] || null;
+    onFileSelect(file);
+  };
 
-  const handleClear = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      onFileChange(null);
-    },
-    [onFileChange]
-  );
-
-  const defaultLabel =
-    category === 'audio'
-      ? 'Drop audio file here or click to browse'
-      : category === 'video'
-      ? 'Drop video file here or click to browse'
-      : category === 'image'
-      ? 'Drop image here or click to browse'
-      : 'Drop audio or video file here or click to browse';
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onFileSelect(null);
+  };
 
   return (
     <div className={className}>
+      <label className="block text-sm font-medium text-foreground/80 mb-2">{label}</label>
+      {/* Hidden file input — no accept restriction, no size limit */}
       <input
         ref={inputRef}
         type="file"
-        accept={accept}
-        onChange={handleInputChange}
+        accept="*"
         className="hidden"
-        aria-label={label ?? defaultLabel}
+        onChange={handleFileChange}
       />
-
-      {file ? (
-        <div className="flex items-center gap-3 bg-arena-surface border border-arena-neon/40 rounded-xl px-4 py-3">
-          <FileTypeIcon file={file} />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-foreground font-medium truncate">{file.name}</p>
-            <p className="text-xs text-muted-foreground">{formatBytes(file.size)}</p>
+      <div
+        onClick={handleClick}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`
+          relative border-2 border-dashed rounded-lg p-6 cursor-pointer transition-all duration-200
+          ${isDragging
+            ? 'border-arena-neon bg-arena-neon/10'
+            : 'border-arena-surface hover:border-arena-neon/50 bg-arena-surface/30 hover:bg-arena-surface/50'
+          }
+        `}
+      >
+        {selectedFile ? (
+          <div className="flex items-center gap-4">
+            {getFileIcon(category, selectedFile)}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{selectedFile.name}</p>
+              <p className="text-xs text-foreground/50 mt-0.5">
+                {formatFileSize(selectedFile.size)}
+                {selectedFile.type && (
+                  <span className="ml-2 text-arena-neon/70">{selectedFile.type}</span>
+                )}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="p-1.5 rounded-full hover:bg-arena-surface text-foreground/50 hover:text-foreground transition-colors flex-shrink-0"
+              aria-label="Remove file"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={handleClear}
-            className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded"
-            aria-label="Remove file"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      ) : (
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => inputRef.current?.click()}
-          onKeyDown={(e) => e.key === 'Enter' && inputRef.current?.click()}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          className={`
-            flex flex-col items-center justify-center gap-3 
-            border-2 border-dashed rounded-xl px-6 py-10 cursor-pointer
-            transition-all duration-200 select-none
-            ${dragging
-              ? 'border-arena-neon bg-arena-neon/10 scale-[1.01]'
-              : 'border-border hover:border-arena-neon/60 hover:bg-arena-surface/60 bg-arena-surface/30'
-            }
-          `}
-        >
-          <CategoryIcon
-            category={category}
-            className="w-8 h-8 text-arena-neon/70"
-          />
-          <div className="text-center">
-            <p className="text-sm text-foreground font-medium">{label ?? defaultLabel}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {category === 'audio' && 'MP3, WAV, AAC'}
-              {category === 'video' && 'MP4, WebM, MOV'}
-              {category === 'image' && 'JPG, PNG, WebP'}
-              {category === 'media' && 'MP3, WAV, AAC · MP4, WebM, MOV'}
-            </p>
+        ) : (
+          <div className="flex flex-col items-center gap-3 text-center">
+            {getFileIcon(category)}
+            <div>
+              <p className="text-sm font-medium text-foreground/80">
+                Drop your file here or <span className="text-arena-neon">browse</span>
+              </p>
+              <p className="text-xs text-foreground/40 mt-1">{getHintText(category)}</p>
+            </div>
           </div>
-          <span className="text-xs text-arena-neon/80 border border-arena-neon/40 rounded-full px-3 py-1">
-            Browse files
-          </span>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

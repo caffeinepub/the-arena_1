@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Heart, Trash2, Image, X, Loader2, LogIn, Sparkles } from 'lucide-react';
+import { Heart, Trash2, Image, X, Loader2, LogIn, Sparkles, MessageCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
-import { ExternalBlob, type Post } from '../backend';
+import { ExternalBlob, type Post, type ThoughtComment } from '../backend';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import {
   useGetAllPosts,
@@ -11,6 +11,9 @@ import {
   useLikePost,
   useGetUserProfile,
   useGetProfilePicture,
+  useGetThoughtComments,
+  useAddThoughtComment,
+  useDeleteThoughtComment,
 } from '../hooks/useQueries';
 import ConfirmationDialog from '../components/ConfirmationDialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -59,22 +62,229 @@ function AuthorAvatar({ principal }: { principal: Principal }) {
   );
 }
 
+// ─── Thought Comment Item ─────────────────────────────────────────────────────
+interface ThoughtCommentItemProps {
+  comment: ThoughtComment;
+  postId: bigint;
+  currentPrincipalStr: string | undefined;
+}
+
+function ThoughtCommentItem({ comment, postId, currentPrincipalStr }: ThoughtCommentItemProps) {
+  const authorPrincipalStr = comment.author.toString();
+  const { data: authorProfile } = useGetUserProfile(comment.author);
+  const deleteThoughtComment = useDeleteThoughtComment();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const isOwner = currentPrincipalStr === authorPrincipalStr;
+  const displayName = authorProfile?.name ?? `${authorPrincipalStr.slice(0, 8)}…`;
+
+  const handleConfirmDelete = () => {
+    deleteThoughtComment.mutate(
+      { postId, commentId: comment.id },
+      {
+        onSuccess: () => {
+          setDeleteOpen(false);
+          toast.success('Comment deleted');
+        },
+        onError: () => {
+          toast.error('Failed to delete comment');
+        },
+      },
+    );
+  };
+
+  return (
+    <>
+      <div className="flex gap-2.5 py-2.5 border-b border-arena-border/50 last:border-b-0">
+        {/* Mini avatar */}
+        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-arena-neon/10 border border-arena-neon/25 flex items-center justify-center">
+          <span className="text-arena-neon text-[10px] font-bold">
+            {displayName.slice(0, 2).toUpperCase()}
+          </span>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-xs font-semibold text-foreground truncate">{displayName}</span>
+            <span className="text-[10px] text-muted-foreground flex-shrink-0">
+              {relativeTime(comment.timestamp)}
+            </span>
+          </div>
+          <p className="text-xs text-foreground/80 leading-relaxed break-words">{comment.text}</p>
+        </div>
+
+        {/* Delete button (owner only) */}
+        {isOwner && (
+          <button
+            onClick={() => setDeleteOpen(true)}
+            disabled={deleteThoughtComment.isPending}
+            aria-label="Delete comment"
+            className="flex-shrink-0 p-1 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+          >
+            {deleteThoughtComment.isPending ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <Trash2 className="w-3 h-3" />
+            )}
+          </button>
+        )}
+      </div>
+
+      <ConfirmationDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete Comment"
+        description="Are you sure you want to delete this comment? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmDelete}
+        isPending={deleteThoughtComment.isPending}
+        destructive
+      />
+    </>
+  );
+}
+
+// ─── Comments Panel ───────────────────────────────────────────────────────────
+interface CommentsPanelProps {
+  postId: bigint;
+  currentPrincipalStr: string | undefined;
+  isAuthenticated: boolean;
+  onLogin: () => void;
+}
+
+function CommentsPanel({ postId, currentPrincipalStr, isAuthenticated, onLogin }: CommentsPanelProps) {
+  const { data: comments = [], isLoading } = useGetThoughtComments(postId);
+  const addThoughtComment = useAddThoughtComment();
+  const [commentText, setCommentText] = useState('');
+
+  const sortedComments = [...comments].sort((a, b) => Number(a.timestamp - b.timestamp));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = commentText.trim();
+    if (!trimmed) return;
+
+    addThoughtComment.mutate(
+      { postId, text: trimmed },
+      {
+        onSuccess: () => {
+          setCommentText('');
+          toast.success('Comment posted!');
+        },
+        onError: () => {
+          toast.error('Failed to post comment');
+        },
+      },
+    );
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSubmit(e as unknown as React.FormEvent);
+    }
+  };
+
+  return (
+    <div className="mt-3 pt-3 border-t border-arena-border/50">
+      {/* Comment input */}
+      <form onSubmit={handleSubmit} className="mb-3">
+        {isAuthenticated ? (
+          <div className="flex gap-2 items-end">
+            <Textarea
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Write a comment… (Ctrl+Enter to submit)"
+              rows={2}
+              maxLength={1000}
+              disabled={addThoughtComment.isPending}
+              className="flex-1 bg-arena-darker border-arena-border text-foreground placeholder:text-muted-foreground resize-none text-xs focus:border-arena-neon/50 focus:ring-arena-neon/20 transition-colors min-h-0"
+              aria-label="Comment text"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              disabled={addThoughtComment.isPending || !commentText.trim()}
+              className="bg-arena-neon text-arena-darker hover:bg-arena-neon/90 font-bold transition-all disabled:opacity-50 flex-shrink-0 h-9 px-3"
+            >
+              {addThoughtComment.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Send className="w-3.5 h-3.5" />
+              )}
+            </Button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onLogin}
+            className="w-full py-2 rounded-lg border border-dashed border-arena-border text-xs text-muted-foreground hover:border-arena-neon/40 hover:text-arena-neon transition-colors flex items-center justify-center gap-1.5"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            Log in to comment
+          </button>
+        )}
+      </form>
+
+      {/* Comments list */}
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1, 2].map((i) => (
+            <div key={i} className="flex gap-2.5 py-2">
+              <Skeleton className="w-7 h-7 rounded-full flex-shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-2.5 w-20" />
+                <Skeleton className="h-3 w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : sortedComments.length === 0 ? (
+        <p className="text-xs text-muted-foreground text-center py-3">
+          No comments yet. Be the first!
+        </p>
+      ) : (
+        <div>
+          {sortedComments.map((comment) => (
+            <ThoughtCommentItem
+              key={comment.id.toString()}
+              comment={comment}
+              postId={postId}
+              currentPrincipalStr={currentPrincipalStr}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Post Card ────────────────────────────────────────────────────────────────
 interface PostCardProps {
   post: Post;
   currentPrincipalStr: string | undefined;
+  isAuthenticated: boolean;
+  onLogin: () => void;
 }
 
-function PostCard({ post, currentPrincipalStr }: PostCardProps) {
+function PostCard({ post, currentPrincipalStr, isAuthenticated, onLogin }: PostCardProps) {
   const { data: profile } = useGetUserProfile(post.author);
   const likePost = useLikePost();
   const deletePost = useDeletePost();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [optimisticLikes, setOptimisticLikes] = useState<bigint | null>(null);
+  const [commentsExpanded, setCommentsExpanded] = useState(false);
 
   const isOwner = currentPrincipalStr === post.author.toString();
   const displayLikes = optimisticLikes !== null ? optimisticLikes : post.likes;
   const authorPrincipalStr = post.author.toString();
+
+  // Fetch comment count when panel is not expanded (for badge display)
+  const { data: comments = [] } = useGetThoughtComments(post.id);
+  const commentCount = comments.length;
 
   const handleLike = () => {
     if (!currentPrincipalStr) {
@@ -172,7 +382,35 @@ function PostCard({ post, currentPrincipalStr }: PostCardProps) {
           <Heart className="w-4 h-4 group-hover:fill-arena-neon group-hover:text-arena-neon transition-all" />
           <span>{displayLikes.toString()}</span>
         </button>
+
+        <button
+          onClick={() => setCommentsExpanded((prev) => !prev)}
+          className={`flex items-center gap-1.5 transition-colors text-sm group ${
+            commentsExpanded
+              ? 'text-arena-neon'
+              : 'text-muted-foreground hover:text-arena-neon'
+          }`}
+          aria-label="Toggle comments"
+          aria-expanded={commentsExpanded}
+        >
+          <MessageCircle
+            className={`w-4 h-4 transition-all ${
+              commentsExpanded ? 'fill-arena-neon/20 text-arena-neon' : 'group-hover:text-arena-neon'
+            }`}
+          />
+          <span>{commentCount}</span>
+        </button>
       </div>
+
+      {/* Collapsible comments panel */}
+      {commentsExpanded && (
+        <CommentsPanel
+          postId={post.id}
+          currentPrincipalStr={currentPrincipalStr}
+          isAuthenticated={isAuthenticated}
+          onLogin={onLogin}
+        />
+      )}
 
       <ConfirmationDialog
         open={deleteOpen}
@@ -366,7 +604,7 @@ function Composer({ currentPrincipalStr }: { currentPrincipalStr: string }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function WhatsOnYourMindPage() {
-  const { identity } = useInternetIdentity();
+  const { identity, login } = useInternetIdentity();
   const isAuthenticated = !!identity;
   const currentPrincipalStr = identity?.getPrincipal().toString();
 
@@ -429,6 +667,8 @@ export default function WhatsOnYourMindPage() {
               key={post.id.toString()}
               post={post}
               currentPrincipalStr={currentPrincipalStr}
+              isAuthenticated={isAuthenticated}
+              onLogin={login}
             />
           ))}
         </div>

@@ -24,8 +24,8 @@ export interface ContentMetadata {
   'title' : string,
   'contentBlob' : ExternalBlob,
   'views' : bigint,
+  'mimeType' : string,
   'description' : string,
-  'fileType' : FileType,
   'likes' : bigint,
   'albumCoverBlob' : [] | [ExternalBlob],
   'thumbnailBlob' : [] | [ExternalBlob],
@@ -33,13 +33,20 @@ export interface ContentMetadata {
   'comments' : bigint,
   'uploadTime' : bigint,
 }
+export interface Conversation {
+  'participants' : Participants,
+  'messages' : Array<Message>,
+}
 export interface Counts { 'followers' : bigint, 'following' : bigint }
 export type ExternalBlob = Uint8Array;
-export type FileType = { 'audioMp3' : null } |
-  { 'audioWav' : null } |
-  { 'videoWebM' : null } |
-  { 'videoMP4' : null } |
-  { 'videoMov' : null };
+export interface Message {
+  'content' : string,
+  'recipient' : Principal,
+  'isRead' : boolean,
+  'sender' : Principal,
+  'timestamp' : bigint,
+}
+export interface Participants { 'user1' : Principal, 'user2' : Principal }
 export interface Post {
   'id' : PostId,
   'media' : [] | [ExternalBlob],
@@ -50,9 +57,16 @@ export interface Post {
 }
 export type PostId = bigint;
 export type SearchCriteria = { 'mostPopular' : null } |
-  { 'byFileType' : FileType } |
+  { 'byMimeType' : string } |
   { 'byUploader' : Principal } |
   { 'recent' : null };
+export interface ThoughtComment {
+  'id' : CommentId,
+  'text' : string,
+  'author' : Principal,
+  'timestamp' : bigint,
+  'postId' : PostId,
+}
 export interface UserProfile {
   'bio' : [] | [string],
   'name' : string,
@@ -91,6 +105,7 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addComment' : ActorMethod<[ContentId, string], CommentId>,
+  'addThoughtComment' : ActorMethod<[PostId, string], CommentId>,
   'addToQueue' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'clearQueue' : ActorMethod<[], undefined>,
@@ -98,6 +113,7 @@ export interface _SERVICE {
   'deleteComment' : ActorMethod<[ContentId, CommentId], undefined>,
   'deleteContent' : ActorMethod<[ContentId], undefined>,
   'deleteThought' : ActorMethod<[PostId], undefined>,
+  'deleteThoughtComment' : ActorMethod<[PostId, CommentId], undefined>,
   'deleteUserProfile' : ActorMethod<[], undefined>,
   'editProfile' : ActorMethod<[UserProfile], undefined>,
   'followUser' : ActorMethod<[Principal], undefined>,
@@ -111,12 +127,15 @@ export interface _SERVICE {
     [SearchCriteria, bigint, bigint],
     Array<ContentMetadata>
   >,
+  'getConversations' : ActorMethod<[], Array<Conversation>>,
   'getCounts' : ActorMethod<[Principal], [] | [Counts]>,
   'getLikesCount' : ActorMethod<[ContentId], bigint>,
+  'getMessages' : ActorMethod<[Principal], [] | [Array<Message>]>,
   'getMyThoughts' : ActorMethod<[], Array<Post>>,
   'getPlaybackQueue' : ActorMethod<[], Array<string>>,
   'getProfilePicture' : ActorMethod<[Principal], [] | [Uint8Array]>,
   'getThought' : ActorMethod<[PostId], Post>,
+  'getThoughtComments' : ActorMethod<[PostId], Array<ThoughtComment>>,
   'getThoughtsByUser' : ActorMethod<[Principal], Array<Post>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'hasUserLikedContent' : ActorMethod<[ContentId, Principal], boolean>,
@@ -124,9 +143,11 @@ export interface _SERVICE {
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isFollowing' : ActorMethod<[Principal], boolean>,
   'likeThought' : ActorMethod<[PostId], undefined>,
+  'markMessageAsRead' : ActorMethod<[Participants, bigint], undefined>,
   'moveItemInQueue' : ActorMethod<[bigint, bigint], undefined>,
   'removeFromQueue' : ActorMethod<[bigint], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'sendMessage' : ActorMethod<[Principal, string], Message>,
   'toggleLike' : ActorMethod<[ContentId], undefined>,
   'unfollowUser' : ActorMethod<[Principal], undefined>,
   'updateProfilePicture' : ActorMethod<[[] | [Uint8Array]], undefined>,
@@ -139,7 +160,7 @@ export interface _SERVICE {
       string,
       string,
       string,
-      FileType,
+      string,
       ExternalBlob,
       [] | [ExternalBlob],
       [] | [ExternalBlob],

@@ -1,5 +1,4 @@
 import { useGetPlaybackQueue, useGetAllContent, useRemoveFromQueue, useMoveItemInQueue, useClearQueue } from '../hooks/useQueries';
-import { FileType } from '../backend';
 import { X, ChevronUp, ChevronDown, Trash2, ListMusic, Music, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,16 +11,31 @@ interface QueuePanelProps {
   currentlyPlayingContentId?: string;
 }
 
-function getFileTypeBadge(fileType: FileType) {
-  const isAudio = fileType === FileType.audioMp3 || fileType === FileType.audioWav;
-  const label = {
-    [FileType.audioMp3]: 'MP3',
-    [FileType.audioWav]: 'WAV',
-    [FileType.videoMP4]: 'MP4',
-    [FileType.videoWebM]: 'WebM',
-    [FileType.videoMov]: 'MOV',
-  }[fileType] ?? 'Media';
-  return { label, isAudio };
+function isAudioMime(mimeType: string): boolean {
+  return mimeType.startsWith('audio/');
+}
+
+function getMimeLabel(mimeType: string): string {
+  const map: Record<string, string> = {
+    'audio/mpeg': 'MP3',
+    'audio/mp3': 'MP3',
+    'audio/wav': 'WAV',
+    'audio/x-wav': 'WAV',
+    'audio/aac': 'AAC',
+    'audio/ogg': 'OGG',
+    'audio/flac': 'FLAC',
+    'video/mp4': 'MP4',
+    'video/webm': 'WebM',
+    'video/quicktime': 'MOV',
+    'video/x-msvideo': 'AVI',
+    'video/x-matroska': 'MKV',
+    'video/x-flv': 'FLV',
+    'video/x-ms-wmv': 'WMV',
+  };
+  if (map[mimeType]) return map[mimeType];
+  const sub = mimeType.split('/')[1];
+  if (sub) return sub.toUpperCase().slice(0, 6);
+  return 'Media';
 }
 
 export default function QueuePanel({ isOpen, onClose, currentlyPlayingContentId }: QueuePanelProps) {
@@ -145,9 +159,9 @@ export default function QueuePanel({ isOpen, onClose, currentlyPlayingContentId 
               {queue.map((contentId, index) => {
                 const content = contentMap.get(contentId);
                 const isPlaying = contentId === currentlyPlayingContentId;
-                const { label, isAudio } = content
-                  ? getFileTypeBadge(content.fileType)
-                  : { label: 'Media', isAudio: true };
+                const mimeType = content?.mimeType ?? '';
+                const isAudio = isAudioMime(mimeType);
+                const label = content ? getMimeLabel(mimeType) : 'Media';
 
                 const thumbnailUrl = content?.thumbnailBlob
                   ? content.thumbnailBlob.getDirectURL()
@@ -220,7 +234,7 @@ export default function QueuePanel({ isOpen, onClose, currentlyPlayingContentId 
                       <button
                         onClick={() => handleMoveUp(index)}
                         disabled={index === 0 || isMoving}
-                        className="p-1 rounded text-muted-foreground hover:text-arena-neon hover:bg-arena-neon/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="p-1 rounded text-muted-foreground hover:text-arena-neon disabled:opacity-30 transition-colors"
                         aria-label="Move up"
                       >
                         <ChevronUp className="w-3.5 h-3.5" />
@@ -228,7 +242,7 @@ export default function QueuePanel({ isOpen, onClose, currentlyPlayingContentId 
                       <button
                         onClick={() => handleMoveDown(index)}
                         disabled={index >= queue.length - 1 || isMoving}
-                        className="p-1 rounded text-muted-foreground hover:text-arena-neon hover:bg-arena-neon/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="p-1 rounded text-muted-foreground hover:text-arena-neon disabled:opacity-30 transition-colors"
                         aria-label="Move down"
                       >
                         <ChevronDown className="w-3.5 h-3.5" />
@@ -236,7 +250,7 @@ export default function QueuePanel({ isOpen, onClose, currentlyPlayingContentId 
                       <button
                         onClick={() => handleRemove(index)}
                         disabled={isRemoving}
-                        className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="p-1 rounded text-muted-foreground hover:text-destructive disabled:opacity-30 transition-colors"
                         aria-label="Remove from queue"
                       >
                         <X className="w-3.5 h-3.5" />

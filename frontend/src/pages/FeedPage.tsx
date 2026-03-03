@@ -2,19 +2,19 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Music, Video, Layers, TrendingUp, Clock, Search } from 'lucide-react';
 import { useGetAllContent, useGetUserProfile } from '../hooks/useQueries';
-import { ContentMetadata, FileType } from '../backend';
+import { ContentMetadata } from '../backend';
 import ContentCard from '../components/ContentCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type FilterTab = 'all' | 'music' | 'video';
 type SortMode = 'recent' | 'popular';
 
-function isAudioType(ft: FileType): boolean {
-  return ft === FileType.audioMp3 || ft === FileType.audioWav;
+function isAudioMime(mimeType: string): boolean {
+  return mimeType.startsWith('audio/');
 }
 
-function isVideoType(ft: FileType): boolean {
-  return ft === FileType.videoMP4 || ft === FileType.videoWebM || ft === FileType.videoMov;
+function isVideoMime(mimeType: string): boolean {
+  return mimeType.startsWith('video/');
 }
 
 function ContentCardWithUploader({ content }: { content: ContentMetadata }) {
@@ -49,9 +49,9 @@ export default function FeedPage() {
 
     // Filter by tab
     if (activeTab === 'music') {
-      items = items.filter((c) => isAudioType(c.fileType));
+      items = items.filter((c) => isAudioMime(c.mimeType));
     } else if (activeTab === 'video') {
-      items = items.filter((c) => isVideoType(c.fileType));
+      items = items.filter((c) => isVideoMime(c.mimeType));
     }
 
     // Filter by search

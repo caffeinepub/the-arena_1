@@ -1,80 +1,39 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-03-03T01:14:31.724Z",
+  "generatedAt": "2026-03-03T04:01:22.423Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 5,
-    "implemented": 3,
+    "total": 2,
+    "implemented": 0,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a backend data model for posts/thoughts with fields: postId (UUID or Nat), authorPrincipal, textContent (String), optionalMediaBlob (optional blob for image/video), optionalMediaMimeType (optional Text), createdAt (Int timestamp), and likes (Nat). Store posts in a stable map keyed by postId.",
-        "status": "unknown",
-        "plannedFiles": [],
+        "summary": "In the ConversationView component, update the message input area so that pressing the Enter key (without Shift) submits and sends the message, while Shift+Enter inserts a newline.",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/components/ConversationView.tsx"
+        ],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Expose the following backend update and query functions for posts: createPost (takes textContent and optional media blob + mimeType, stores post under caller's principal), deletePost (caller can only delete their own posts), getAllPosts (returns all posts sorted by createdAt descending), getPostsByUser (returns posts for a given principal), and likePost (increments like count for a post).",
-        "status": "unknown",
-        "plannedFiles": [],
+        "summary": "In the ConversationView component, ensure a visible 'Send' button is displayed alongside the message input. The button must be clearly styled and clickable to submit the message, consistent with the Arena neon dark theme.",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/components/ConversationView.tsx"
+        ],
         "matchedFiles": []
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Add React Query hooks in useQueries.ts for all post operations: useGetAllPosts, useGetPostsByUser, useCreatePost (mutation), useDeletePost (mutation), and useLikePost (mutation). Invalidate the posts query cache on successful create, delete, or like mutations.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Create a new page component at frontend/src/pages/WhatsOnYourMindPage.tsx. The page should include: a prominent heading 'What's on Your Mind?', a text area for typing thoughts or post content (max ~500 characters with a live character counter), an optional media attachment input supporting images and videos (displayed as a preview before posting), a 'Post' submit button (disabled when text is empty and no media is attached, and shows a loading state while posting), and a feed of all posts displayed below the composer in reverse chronological order. Each post card must show: the author's display name and avatar (fetched via existing profile hooks), the post text, an optional media preview, a like button with count, the post timestamp, and a delete button (visible only to the post's author).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/WhatsOnYourMindPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/WhatsOnYourMindPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Register a new route '/mind' for the WhatsOnYourMindPage in frontend/src/App.tsx and add a navigation link labeled 'What's on Your Mind' (or a short variant like 'Mind') to the sticky header in frontend/src/components/Layout.tsx, alongside the existing Feed and Upload links.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/Layout.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/Layout.tsx"
-        ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
-    "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/Layout.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/pages/WhatsOnYourMindPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

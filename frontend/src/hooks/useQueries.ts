@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import { type ContentMetadata, type UserProfile, type FileType, type Comment, type Post, ExternalBlob } from '../backend';
+import { type ContentMetadata, type UserProfile, type Comment, type Post, type ThoughtComment, type Conversation, type Message, type Participants, ExternalBlob } from '../backend';
 import { useInternetIdentity } from './useInternetIdentity';
 import type { Principal } from '@dfinity/principal';
 
@@ -89,7 +89,7 @@ export function useGetProfilePicture(principal: Principal | undefined) {
       return actor.getProfilePicture(principal);
     },
     enabled: !!actor && !actorFetching && !!principal,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -126,7 +126,7 @@ export function useGetUserProfile(principal: Principal | undefined) {
       return actor.getUserProfile(principal);
     },
     enabled: !!actor && !actorFetching && !!principal,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -254,7 +254,7 @@ export interface UploadContentParams {
   id: string;
   title: string;
   description: string;
-  fileType: FileType;
+  mimeType: string;
   contentBlob: ExternalBlob;
   thumbnailBlob: ExternalBlob | null;
   albumCoverBlob: ExternalBlob | null;
@@ -272,7 +272,7 @@ export function useUploadContent() {
         params.id,
         params.title,
         params.description,
-        params.fileType,
+        params.mimeType,
         params.contentBlob,
         params.thumbnailBlob,
         params.albumCoverBlob,
@@ -524,6 +524,136 @@ export function useLikePost() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allPosts'] });
       queryClient.invalidateQueries({ queryKey: ['userPosts'] });
+    },
+  });
+}
+
+// ─── Thought Comments ─────────────────────────────────────────────────────────
+
+export function useGetThoughtComments(postId: bigint) {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<ThoughtComment[]>({
+    queryKey: ['thoughtComments', postId.toString()],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getThoughtComments(postId);
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+export function useAddThoughtComment() {
+  const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ postId, text }: { postId: bigint; text: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
+      return actor.addThoughtComment(postId, text);
+    },
+    onSuccess: (_data, { postId }) => {
+      queryClient.invalidateQueries({ queryKey: ['thoughtComments', postId.toString()] });
+      queryClient.invalidateQueries({ queryKey: ['allPosts'] });
+    },
+  });
+}
+
+export function useDeleteThoughtComment() {
+  const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ postId, commentId }: { postId: bigint; commentId: bigint }) => {
+      if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
+      return actor.deleteThoughtComment(postId, commentId);
+    },
+    onSuccess: (_data, { postId }) => {
+      queryClient.invalidateQueries({ queryKey: ['thoughtComments', postId.toString()] });
+    },
+  });
+}
+
+// ─── Messaging ────────────────────────────────────────────────────────────────
+
+export function useGetConversations() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<Conversation[]>({
+    queryKey: ['conversations'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getConversations();
+    },
+    enabled: !!actor && !actorFetching && !!identity,
+    refetchOnWindowFocus: true,
+    refetchInterval: 15000, // Poll every 15 seconds for new messages
+  });
+}
+
+export function useGetMessages(partner: Principal | undefined) {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  const partnerStr = partner?.toString();
+
+  return useQuery<Message[] | null>({
+    queryKey: ['messages', partnerStr],
+    queryFn: async () => {
+      if (!actor || !partner) return null;
+      return actor.getMessages(partner);
+    },
+    enabled: !!actor && !actorFetching && !!partner && !!identity,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000, // Poll every 10 seconds for new messages in active conversation
+  });
+}
+
+export function useSendMessage() {
+  const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ recipient, content }: { recipient: Principal; content: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
+      return actor.sendMessage(recipient, content);
+    },
+    onSuccess: (_data, { recipient }) => {
+      const recipientStr = recipient.toString();
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['messages', recipientStr] });
+    },
+  });
+}
+
+export function useMarkMessageAsRead() {
+  const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      conversationKey,
+      messageIndex,
+      partnerStr,
+    }: {
+      conversationKey: Participants;
+      messageIndex: bigint;
+      partnerStr: string;
+    }) => {
+      if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
+      return actor.markMessageAsRead(conversationKey, messageIndex);
+    },
+    onSuccess: (_data, { partnerStr }) => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['messages', partnerStr] });
     },
   });
 }
