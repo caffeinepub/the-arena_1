@@ -1,57 +1,32 @@
 {
   "kind": "build_request",
-  "title": "Add keyboard send (Enter key) and Send button to message input",
-  "projectName": "The Arena",
+  "title": "Display artist profile name in 'Uploaded by' label",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "In the ConversationView component, update the message input area so that pressing the Enter key (without Shift) submits and sends the message, while Shift+Enter inserts a newline.",
+      "id": "REQ-3",
+      "text": "In the ContentCard component (and any other location that displays an 'Uploaded by' label), replace the generic identifier with the actual artist/user display name fetched from their profile. Look up the uploader's profile using their principal and render their display name (e.g., 'Uploaded by <ArtistName>') instead of a raw principal or placeholder text.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "Add keyboard and send tab to message"
+          "I want upload by to be the artists name of profile"
         ]
       },
       "acceptanceCriteria": [
-        "Pressing Enter in the message input field sends the message without requiring a button click.",
-        "Pressing Shift+Enter inserts a newline in the message input instead of sending.",
-        "After sending via Enter, the input field is cleared."
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "In the ConversationView component, ensure a visible 'Send' button is displayed alongside the message input. The button must be clearly styled and clickable to submit the message, consistent with the Arena neon dark theme.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Add keyboard and send tab to message"
-        ]
-      },
-      "acceptanceCriteria": [
-        "A Send button is visible next to the message text input at all times.",
-        "Clicking the Send button submits the current message.",
-        "The Send button is disabled when the input is empty.",
-        "After sending via the button, the input field is cleared and focus returns to the input."
+        "The 'Uploaded by' section on ContentCard shows the uploader's profile display name, not a raw principal or generic label.",
+        "If the uploader has no display name set, fall back gracefully (e.g., show a shortened principal or 'Unknown Artist').",
+        "The same fix applies consistently wherever 'Uploaded by' is rendered across the app (e.g., ContentDetailPage if applicable).",
+        "The display name links or navigates to the uploader's user profile page."
       ]
     }
   ],
-  "constraints": [
-    "Do not modify any files under frontend/src/hooks/ (immutable paths).",
-    "Do not modify frontend/src/components/ui/ components.",
-    "Preserve existing message sending logic and React Query mutations in ConversationView."
-  ],
+  "constraints": [],
   "nonGoals": [
-    "Adding real-time/WebSocket message delivery.",
-    "Changing backend messaging API or data models.",
-    "Adding emoji picker or file attachment to the message input.",
-    "Modifying the conversation list panel layout."
+    "Changing the backend data model for content metadata.",
+    "Modifying the messaging or conversation features."
   ],
   "imageRequirements": {
     "required": [],

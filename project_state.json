@@ -1,11 +1,20 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 3,
-  "summary": "Messaging application with user-to-user conversations. Currently adding keyboard and send button/tab functionality to the message input.",
+  "projectStateVersion": 5,
+  "summary": "Messaging application with user-to-user conversations. Adding keyboard/send button functionality and updating uploaded-by display to show the artist's profile name instead of a generic label.",
   "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
-  "existing_features": [],
+  "existing_features": [
+    {
+      "id": "feature-in-the-contentcard-component-and-any-other-location-that-displays-an-uploaded-by-label-replace-the-generic-identifier-with-the-actual-artist-user-display-name-fetched-from-their-profile-look-up-the-uploader-s-profile-using-their-principal-and-render-their-display-name-e-g-uploaded-by-artistname-instead-of-a-raw-principal-or-placeholder-text",
+      "title": "In the ContentCard component (and any other location that displays an 'Uploaded by' label), replace the generic identifier with the actual artist/user display name fetched from their profile. Look up the uploader's profile using their principal and render their display name (e.g., 'Uploaded by <ArtistName>') instead of a raw principal or placeholder text.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    }
+  ],
   "new_feature_requests": [
     {
       "id": "AR-1",
@@ -27,6 +36,12 @@
       "reqIds": [
         "REQ-2"
       ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Change the 'Uploaded by' label to display the artist's profile name instead of a generic identifier.",
+      "reqIds": [],
       "status": "pending"
     }
   ],

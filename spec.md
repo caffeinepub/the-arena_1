@@ -1,13 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Improve the message input in ConversationView by adding Enter key submission and a visible Send button.
+**Goal:** Display the uploader's artist/profile display name in the "Uploaded by" label on content cards and detail pages.
 
 **Planned changes:**
-- Update the message input so pressing Enter (without Shift) sends the message and clears the input field
-- Support Shift+Enter to insert a newline without sending
-- Add a visible Send button next to the message input, styled to match the Arena neon dark theme
-- Disable the Send button when the input is empty
-- Return focus to the input field after sending via the Send button
+- In the `ContentCard` component, look up the uploader's profile by their principal and render their display name in the "Uploaded by" label (e.g., "Uploaded by ArtistName").
+- Apply the same fix on `ContentDetailPage` (and any other location) where "Uploaded by" is displayed.
+- If the uploader has no display name, fall back to a shortened principal or "Unknown Artist".
+- Make the displayed name link/navigate to the uploader's profile page.
 
-**User-visible outcome:** Users can send messages by pressing Enter or clicking the Send button, with Shift+Enter available for multi-line input.
+**User-visible outcome:** Users see the actual artist/profile name next to "Uploaded by" on content cards and detail pages, with a link to the uploader's profile, instead of a raw principal or placeholder text.

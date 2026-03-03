@@ -1,4 +1,25 @@
 {
   "kind": "feature_evidence_report",
-  "features": []
+  "features": [
+    {
+      "featureId": "feature-in-the-contentcard-component-and-any-other-location-that-displays-an-uploaded-by-label-replace-the-generic-identifier-with-the-actual-artist-user-display-name-fetched-from-their-profile-look-up-the-uploader-s-profile-using-their-principal-and-render-their-display-name-e-g-uploaded-by-artistname-instead-of-a-raw-principal-or-placeholder-text",
+      "featureTitle": "In the ContentCard component (and any other location that displays an 'Uploaded by' label), replace the generic identifier with the actual artist/user display name fetched from their profile. Look up the uploader's profile using their principal and render their display name (e.g., 'Uploaded by <ArtistName>') instead of a raw principal or placeholder text.",
+      "files": [
+        "frontend/src/pages/ContentDetailPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    }
+  ]
 }

@@ -1,39 +1,36 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-03-03T04:01:22.423Z",
+  "generatedAt": "2026-03-03T04:27:14.062Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 0,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
-        "id": "REQ-1",
-        "summary": "In the ConversationView component, update the message input area so that pressing the Enter key (without Shift) submits and sends the message, while Shift+Enter inserts a newline.",
-        "status": "missing",
+        "id": "REQ-3",
+        "summary": "In the ContentCard component (and any other location that displays an 'Uploaded by' label), replace the generic identifier with the actual artist/user display name fetched from their profile. Look up the uploader's profile using their principal and render their display name (e.g., 'Uploaded by <ArtistName>') instead of a raw principal or placeholder text.",
+        "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/ConversationView.tsx"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/ContentCard.tsx",
+          "frontend/src/pages/ContentDetailPage.tsx"
         ],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-2",
-        "summary": "In the ConversationView component, ensure a visible 'Send' button is displayed alongside the message input. The button must be clearly styled and clickable to submit the message, consistent with the Arena neon dark theme.",
-        "status": "missing",
-        "plannedFiles": [
-          "frontend/src/components/ConversationView.tsx"
-        ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/src/pages/ContentDetailPage.tsx"
+        ]
       }
     ]
   },
   "changedFiles": [
     "build-request.json",
     "feature_evidence.json",
+    "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/pages/ContentDetailPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

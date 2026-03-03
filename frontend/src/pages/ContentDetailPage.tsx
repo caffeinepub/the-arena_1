@@ -8,6 +8,7 @@ import {
   useToggleLike,
   useHasUserLikedContent,
   useDeleteContent,
+  useGetUserProfile,
 } from '../hooks/useQueries';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import MediaPlayer from '../components/MediaPlayer';
@@ -16,7 +17,7 @@ import ConfirmationDialog from '../components/ConfirmationDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Eye, Heart, MessageCircle, Music, Video, Calendar, ListPlus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Eye, Heart, MessageCircle, Music, Video, Calendar, ListPlus, Trash2, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 function formatDate(uploadTime: bigint): string {
@@ -61,6 +62,11 @@ export default function ContentDetailPage() {
   const { data: hasLiked = false } = useHasUserLikedContent(id);
   const { data: queue = [] } = useGetPlaybackQueue();
   const { mutate: deleteContent, isPending: isDeletingContent } = useDeleteContent();
+
+  // Fetch uploader's profile for display name
+  const { data: uploaderProfile, isLoading: isUploaderLoading } = useGetUserProfile(
+    content?.uploader
+  );
 
   const [showComments, setShowComments] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -143,6 +149,11 @@ export default function ContentDetailPage() {
     });
   };
 
+  const handleUploaderClick = () => {
+    if (!content) return;
+    navigate({ to: '/profile/$principal', params: { principal: content.uploader.toString() } });
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
@@ -170,6 +181,15 @@ export default function ContentDetailPage() {
   }
 
   const { label, isAudio } = getMimeInfo(content.mimeType);
+
+  // Resolve uploader display name
+  const uploaderDisplayName = uploaderProfile?.name
+    ?? (content.uploader.toString().slice(0, 8) + '…');
+
+  // Avatar initials: use first letter of name if available, else first 2 chars of principal
+  const avatarInitials = uploaderProfile?.name
+    ? uploaderProfile.name.slice(0, 2).toUpperCase()
+    : content.uploader.toString().slice(0, 2).toUpperCase();
 
   // Build the track object for MediaPlayer
   const track = {
@@ -324,17 +344,31 @@ export default function ContentDetailPage() {
 
           {/* Uploader */}
           <div className="flex items-center gap-2 py-3 border-t border-arena-border">
-            <div className="w-8 h-8 rounded-full bg-arena-neon/10 border border-arena-neon/30 flex items-center justify-center">
-              <span className="text-arena-neon text-xs font-bold">
-                {content.uploader.toString().slice(0, 2).toUpperCase()}
-              </span>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Uploaded by</p>
-              <p className="text-sm font-semibold text-foreground">
-                {content.uploader.toString().slice(0, 12)}...
-              </p>
-            </div>
+            <button
+              onClick={handleUploaderClick}
+              className="flex items-center gap-3 group/uploader"
+              title={`View ${uploaderDisplayName}'s profile`}
+            >
+              <div className="w-9 h-9 rounded-full bg-arena-neon/10 border border-arena-neon/30 flex items-center justify-center flex-shrink-0 group-hover/uploader:border-arena-neon/60 transition-colors">
+                {isUploaderLoading ? (
+                  <User className="w-4 h-4 text-arena-neon/50" />
+                ) : (
+                  <span className="text-arena-neon text-xs font-bold">
+                    {avatarInitials}
+                  </span>
+                )}
+              </div>
+              <div className="text-left">
+                <p className="text-xs text-muted-foreground">Uploaded by</p>
+                {isUploaderLoading ? (
+                  <Skeleton className="h-4 w-24 bg-arena-surface mt-0.5" />
+                ) : (
+                  <p className="text-sm font-semibold text-foreground group-hover/uploader:text-arena-neon transition-colors">
+                    {uploaderDisplayName}
+                  </p>
+                )}
+              </div>
+            </button>
           </div>
 
           {/* Description */}

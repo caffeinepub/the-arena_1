@@ -1,38 +1,32 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add keyboard send (Enter key) and Send button to message input",
+  "title": "Display artist profile name in 'Uploaded by' label",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Update message input in ConversationView to support Enter key to send (Shift+Enter for newline)",
+      "id": "REQ-3",
+      "summary": "Replace raw principal identifiers with artist display names in 'Uploaded by' labels across the app",
       "acceptanceCriteria": [
-        "Pressing Enter in the message input field sends the message without requiring a button click.",
-        "Pressing Shift+Enter inserts a newline in the message input instead of sending.",
-        "After sending via Enter, the input field is cleared."
+        "The 'Uploaded by' section on ContentCard shows the uploader's profile display name, not a raw principal or generic label.",
+        "If the uploader has no display name set, fall back gracefully (e.g., show a shortened principal or 'Unknown Artist').",
+        "The same fix applies consistently wherever 'Uploaded by' is rendered across the app (e.g., ContentDetailPage if applicable).",
+        "The display name links or navigates to the uploader's user profile page."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/ConversationView.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add onKeyDown event handler to the message input textarea that detects Enter key presses. If Enter is pressed without Shift, prevent default behavior, trigger the sendMessage mutation (only if input is non-empty), and clear the input. If Shift+Enter is pressed, allow default newline insertion behavior."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Add a visible Send button alongside the message input in ConversationView",
-      "acceptanceCriteria": [
-        "A Send button is visible next to the message text input at all times.",
-        "Clicking the Send button submits the current message.",
-        "The Send button is disabled when the input is empty.",
-        "After sending via the button, the input field is cleared and focus returns to the input."
-      ],
-      "file_operations": [
+          "description": "Add a new React Query hook `useGetUserProfile(user: Principal)` that wraps the backend's `getUserProfile` method to fetch a specific user's profile by their principal. This will be used to look up uploader profiles in the ContentCard and ContentDetailPage components."
+        },
         {
-          "path": "frontend/src/components/ConversationView.tsx",
+          "path": "frontend/src/components/ContentCard.tsx",
           "operation": "modify",
-          "description": "Add a Send button adjacent to the message textarea in the input area. Style the button consistently with the Arena neon dark theme using existing design tokens (e.g., arena-accent color, neon glow effects). Disable the button when the message input is empty (trimmed). On click, invoke the sendMessage mutation, clear the input, and return focus to the textarea. Ensure the button layout integrates smoothly with the existing message input container (e.g., flex row with textarea and button side-by-side)."
+          "description": "Update the ContentCard component to fetch and display the uploader's profile display name using the new `useGetUserProfile` hook with the `content.uploader` principal. Replace the current 'Uploaded by' section to show the artist's name instead of a raw principal. If the profile is loading, show a skeleton or placeholder. If the profile has no name or fetch fails, fall back to a shortened principal (first 8 characters) or 'Unknown Artist'. Make the artist name clickable and navigate to `/profile/{uploader-principal}` using the Link component from TanStack Router."
+        },
+        {
+          "path": "frontend/src/pages/ContentDetailPage.tsx",
+          "operation": "modify",
+          "description": "Update the ContentDetailPage component to fetch and display the uploader's profile display name using the new `useGetUserProfile` hook with the `content.uploader` principal. Add or update any 'Uploaded by' or artist information display to show the artist's name instead of a raw principal. If the profile is loading, show a skeleton or placeholder. If the profile has no name or fetch fails, fall back to a shortened principal (first 8 characters) or 'Unknown Artist'. Make the artist name clickable and navigate to `/profile/{uploader-principal}` using the Link component from TanStack Router."
         }
       ]
     }
