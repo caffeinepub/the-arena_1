@@ -1,5 +1,12 @@
 import { Link, useLocation, useRouterState } from "@tanstack/react-router";
-import { Crown, ListMusic, MessageSquare, Tv2, Upload } from "lucide-react";
+import {
+  BarChart2,
+  Crown,
+  ListMusic,
+  MessageSquare,
+  Tv2,
+  Upload,
+} from "lucide-react";
 import { useState } from "react";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useGetPlaybackQueue } from "../hooks/useQueries";
@@ -30,6 +37,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const navLinks: NavLink[] = [
     { to: "/", label: "Feed", icon: <Tv2 className="w-4 h-4" /> },
+    { to: "/charts", label: "Charts", icon: <BarChart2 className="w-4 h-4" /> },
     { to: "/upload", label: "Upload", icon: <Upload className="w-4 h-4" /> },
     { to: "/mind", label: "Mind", icon: <MessageSquare className="w-4 h-4" /> },
   ];

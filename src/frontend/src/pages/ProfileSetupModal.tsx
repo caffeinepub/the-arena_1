@@ -178,6 +178,7 @@ export default function ProfileSetupModal() {
               maxLength={60}
               autoFocus
               className="bg-arena-darker border-arena-border text-foreground placeholder:text-muted-foreground focus:border-arena-neon/60 focus:ring-arena-neon/20"
+              style={{ color: "#f0e6c8", WebkitTextFillColor: "#f0e6c8" }}
             />
           </div>
 
@@ -200,6 +201,7 @@ export default function ProfileSetupModal() {
               disabled={isPending}
               rows={3}
               className="bg-arena-darker border-arena-border text-foreground placeholder:text-muted-foreground focus:border-arena-neon/60 focus:ring-arena-neon/20 resize-none"
+              style={{ color: "#f0e6c8", WebkitTextFillColor: "#f0e6c8" }}
             />
             <p
               className={`text-xs text-right ${bio.length >= BIO_MAX ? "text-destructive" : "text-muted-foreground"}`}

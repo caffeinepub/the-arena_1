@@ -19,6 +19,7 @@ import {
   useHasUserLikedContent,
   useToggleLike,
 } from "../hooks/useQueries";
+import { parseGenre } from "../utils/genres";
 import ConfirmationDialog from "./ConfirmationDialog";
 
 interface ContentCardProps {
@@ -112,6 +113,7 @@ export default function ContentCard({
 
   const badge = getFileTypeBadge(content.mimeType);
   const thumbnailUrl = getThumbnailUrl(content);
+  const genre = parseGenre(content.description);
 
   const isOwner = identity
     ? content.uploader.toString() === identity.getPrincipal().toString()
@@ -217,6 +219,18 @@ export default function ContentCard({
           <h3 className="text-sm font-semibold text-foreground line-clamp-2 leading-snug group-hover:text-arena-neon transition-colors">
             {content.title}
           </h3>
+          {genre && (
+            <span
+              className="inline-block text-xs font-semibold rounded-full px-2 py-0.5 border"
+              style={{
+                borderColor: "oklch(0.78 0.18 85 / 0.4)",
+                color: "oklch(0.78 0.18 85)",
+                background: "oklch(0.78 0.18 85 / 0.08)",
+              }}
+            >
+              {genre}
+            </span>
+          )}
           {uploaderName && (
             <button
               type="button"

@@ -9,6 +9,7 @@ import {
 import Layout from "./components/Layout";
 import { useInternetIdentity } from "./hooks/useInternetIdentity";
 import { useGetCallerUserProfile } from "./hooks/useQueries";
+import ChartsPage from "./pages/ChartsPage";
 import ContentDetailPage from "./pages/ContentDetailPage";
 import FeedPage from "./pages/FeedPage";
 import ProfileSetupModal from "./pages/ProfileSetupModal";
@@ -73,12 +74,19 @@ const mindRoute = createRoute({
   component: WhatsOnYourMindPage,
 });
 
+const chartsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/charts",
+  component: ChartsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   feedRoute,
   uploadRoute,
   contentDetailRoute,
   userProfileRoute,
   mindRoute,
+  chartsRoute,
 ]);
 
 const router = createRouter({ routeTree });

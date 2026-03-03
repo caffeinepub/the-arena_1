@@ -2,10 +2,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "@tanstack/react-router";
 import { Clock, Layers, Music, Search, TrendingUp, Video } from "lucide-react";
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ContentMetadata } from "../backend";
 import ContentCard from "../components/ContentCard";
 import { useGetAllContent, useGetUserProfile } from "../hooks/useQueries";
+import { GENRES, type Genre, parseGenre } from "../utils/genres";
 
 type FilterTab = "all" | "music" | "video";
 type SortMode = "recent" | "popular";
@@ -43,6 +44,8 @@ export default function FeedPage() {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [sortMode, setSortMode] = useState<SortMode>("recent");
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeGenre, setActiveGenre] = useState<Genre | null>(null);
+  const genreScrollRef = useRef<HTMLDivElement>(null);
 
   const { data: allContent = [], isLoading } = useGetAllContent();
 
@@ -54,6 +57,11 @@ export default function FeedPage() {
       items = items.filter((c) => isAudioMime(c.mimeType));
     } else if (activeTab === "video") {
       items = items.filter((c) => isVideoMime(c.mimeType));
+    }
+
+    // Filter by genre
+    if (activeGenre) {
+      items = items.filter((c) => parseGenre(c.description) === activeGenre);
     }
 
     // Filter by search
@@ -74,7 +82,7 @@ export default function FeedPage() {
     }
 
     return items;
-  }, [allContent, activeTab, sortMode, searchQuery]);
+  }, [allContent, activeTab, activeGenre, sortMode, searchQuery]);
 
   const tabs: { id: FilterTab; label: string; icon: React.ReactNode }[] = [
     { id: "all", label: "All", icon: <Layers className="w-4 h-4" /> },
@@ -259,7 +267,8 @@ export default function FeedPage() {
                 style={{
                   background: "oklch(0.12 0.025 285)",
                   border: "1px solid oklch(0.22 0.04 285)",
-                  color: "oklch(0.9 0.01 80)",
+                  color: "#f0e6c8",
+                  WebkitTextFillColor: "#f0e6c8",
                 }}
                 data-ocid="feed.search.input"
               />
@@ -309,6 +318,71 @@ export default function FeedPage() {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Genre Filter Row */}
+      <div
+        className="px-4 py-2"
+        style={{
+          background: "oklch(0.07 0.02 285 / 0.98)",
+          borderBottom: "1px solid oklch(0.78 0.18 85 / 0.08)",
+        }}
+      >
+        <div
+          ref={genreScrollRef}
+          className="max-w-6xl mx-auto flex gap-2 overflow-x-auto pb-1"
+          style={{
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
+          {/* "All Genres" reset button */}
+          <button
+            type="button"
+            onClick={() => setActiveGenre(null)}
+            className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-all"
+            style={
+              activeGenre === null
+                ? {
+                    borderColor: "oklch(0.78 0.18 85 / 0.7)",
+                    color: "oklch(0.88 0.18 85)",
+                    background: "oklch(0.78 0.18 85 / 0.1)",
+                  }
+                : {
+                    borderColor: "oklch(0.22 0.04 285)",
+                    color: "oklch(0.5 0.04 285)",
+                  }
+            }
+            data-ocid="feed.genre.all.tab"
+          >
+            All Genres
+          </button>
+          {GENRES.map((genre) => (
+            <button
+              key={genre}
+              type="button"
+              onClick={() =>
+                setActiveGenre(activeGenre === genre ? null : genre)
+              }
+              className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-all"
+              style={
+                activeGenre === genre
+                  ? {
+                      borderColor: "oklch(0.78 0.18 85 / 0.7)",
+                      color: "oklch(0.88 0.18 85)",
+                      background: "oklch(0.78 0.18 85 / 0.1)",
+                    }
+                  : {
+                      borderColor: "oklch(0.22 0.04 285)",
+                      color: "oklch(0.5 0.04 285)",
+                    }
+              }
+              data-ocid="feed.genre.tab"
+            >
+              {genre}
+            </button>
+          ))}
         </div>
       </div>
 

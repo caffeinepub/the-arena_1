@@ -275,6 +275,7 @@ export default function EditProfileDialog({
               maxLength={60}
               className="bg-arena-darker border-arena-border text-foreground placeholder:text-muted-foreground focus:border-arena-neon/60 focus:ring-arena-neon/20"
               autoFocus
+              style={{ color: "#f0e6c8", WebkitTextFillColor: "#f0e6c8" }}
             />
             {name.trim().length === 0 && name.length > 0 && (
               <p className="text-xs text-destructive">Name cannot be empty.</p>
@@ -300,6 +301,7 @@ export default function EditProfileDialog({
               disabled={isPending}
               rows={3}
               className="bg-arena-darker border-arena-border text-foreground placeholder:text-muted-foreground focus:border-arena-neon/60 focus:ring-arena-neon/20 resize-none"
+              style={{ color: "#f0e6c8", WebkitTextFillColor: "#f0e6c8" }}
             />
             <p
               className={`text-xs text-right ${bio.length >= BIO_MAX ? "text-destructive" : "text-muted-foreground"}`}

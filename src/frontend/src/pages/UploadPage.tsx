@@ -9,6 +9,7 @@ import { ExternalBlob } from "../backend";
 import FileUploadInput from "../components/FileUploadInput";
 import ThumbnailCreator from "../components/ThumbnailCreator";
 import { useUploadContent } from "../hooks/useQueries";
+import { GENRES, type Genre, prependGenre } from "../utils/genres";
 
 type ContentCategory = "audio" | "video";
 
@@ -19,6 +20,7 @@ export default function UploadPage() {
   const [category, setCategory] = useState<ContentCategory>("audio");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [thumbnailBuffer, setThumbnailBuffer] = useState<ArrayBuffer | null>(
     null,
@@ -54,6 +56,10 @@ export default function UploadPage() {
       setError("Please enter a title.");
       return;
     }
+    if (!selectedGenre) {
+      setError("Please select a genre.");
+      return;
+    }
     if (!mediaFile) {
       setError("Please select a media file.");
       return;
@@ -80,10 +86,14 @@ export default function UploadPage() {
 
       const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+      const finalDescription = selectedGenre
+        ? prependGenre(selectedGenre, description.trim())
+        : description.trim();
+
       await uploadContent.mutateAsync({
         id,
         title: title.trim(),
-        description: description.trim(),
+        description: finalDescription,
         mimeType,
         contentBlob,
         thumbnailBlob,
@@ -191,7 +201,59 @@ export default function UploadPage() {
               placeholder={isAudio ? "Track title..." : "Video title..."}
               className="bg-arena-surface border-arena-surface/80 focus:border-arena-neon/50"
               maxLength={100}
+              data-ocid="upload.title.input"
+              style={{ color: "#f0e6c8", WebkitTextFillColor: "#f0e6c8" }}
             />
+          </div>
+
+          {/* Genre Selector */}
+          <div>
+            <p className="block text-sm font-medium text-foreground/80 mb-3">
+              Genre *
+            </p>
+            <div
+              className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1"
+              style={{
+                scrollbarWidth: "thin",
+                scrollbarColor: "oklch(0.78 0.18 85 / 0.3) transparent",
+              }}
+            >
+              {GENRES.map((genre) => (
+                <button
+                  key={genre}
+                  type="button"
+                  onClick={() =>
+                    setSelectedGenre(selectedGenre === genre ? null : genre)
+                  }
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150"
+                  style={
+                    selectedGenre === genre
+                      ? {
+                          background: "oklch(0.78 0.18 85)",
+                          borderColor: "oklch(0.78 0.18 85)",
+                          color: "oklch(0.1 0.03 285)",
+                          boxShadow: "0 0 12px oklch(0.78 0.18 85 / 0.5)",
+                        }
+                      : {
+                          background: "oklch(0.12 0.025 285)",
+                          borderColor: "oklch(0.25 0.04 285)",
+                          color: "oklch(0.65 0.06 285)",
+                        }
+                  }
+                  data-ocid="upload.genre.button"
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
+            {selectedGenre && (
+              <p
+                className="mt-2 text-xs"
+                style={{ color: "oklch(0.78 0.18 85)" }}
+              >
+                Selected: <span className="font-bold">{selectedGenre}</span>
+              </p>
+            )}
           </div>
 
           {/* Description */}
@@ -210,6 +272,7 @@ export default function UploadPage() {
               className="bg-arena-surface border-arena-surface/80 focus:border-arena-neon/50 resize-none"
               rows={4}
               maxLength={500}
+              style={{ color: "#f0e6c8", WebkitTextFillColor: "#f0e6c8" }}
             />
           </div>
 

@@ -1,6 +1,6 @@
 import { File, FileAudio, FileVideo, Image, Upload, X } from "lucide-react";
 import type React from "react";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 
 type FileCategory = "audio" | "video" | "image" | "media" | "any";
 
@@ -10,6 +10,7 @@ interface FileUploadInputProps {
   onFileSelect: (file: File | null) => void;
   selectedFile?: File | null;
   className?: string;
+  id?: string;
 }
 
 function getFileIcon(category: FileCategory, file?: File | null) {
@@ -64,7 +65,10 @@ export default function FileUploadInput({
   onFileSelect,
   selectedFile,
   className = "",
+  id: idProp,
 }: FileUploadInputProps) {
+  const generatedId = useId();
+  const inputId = idProp ?? `file-upload-input-${generatedId}`;
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -103,7 +107,7 @@ export default function FileUploadInput({
   return (
     <div className={className}>
       <label
-        htmlFor="file-upload-input"
+        htmlFor={inputId}
         className="block text-sm font-medium text-foreground/80 mb-2"
       >
         {label}
@@ -111,20 +115,20 @@ export default function FileUploadInput({
       {/* Hidden file input — no accept restriction, no size limit */}
       <input
         ref={inputRef}
-        id="file-upload-input"
+        id={inputId}
         type="file"
-        accept="*"
+        accept="*/*"
         className="hidden"
         onChange={handleFileChange}
       />
-      <div
+      <button
+        type="button"
         onClick={handleClick}
-        onKeyDown={(e) => e.key === "Enter" && handleClick()}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`
-          relative border-2 border-dashed rounded-lg p-6 cursor-pointer transition-all duration-200
+          w-full relative border-2 border-dashed rounded-lg p-6 cursor-pointer transition-all duration-200
           ${
             isDragging
               ? "border-arena-neon bg-arena-neon/10"
@@ -171,7 +175,7 @@ export default function FileUploadInput({
             </div>
           </div>
         )}
-      </div>
+      </button>
     </div>
   );
 }

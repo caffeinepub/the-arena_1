@@ -226,6 +226,7 @@ export default function CommentsSection({ contentId }: CommentsSectionProps) {
               maxLength={1000}
               disabled={isSubmitting}
               className="bg-arena-surface border-arena-border text-foreground placeholder:text-muted-foreground resize-none focus:border-arena-neon/50 focus:ring-arena-neon/20 transition-colors"
+              style={{ color: "#f0e6c8", WebkitTextFillColor: "#f0e6c8" }}
               aria-label="Comment text"
             />
             <div className="flex items-center justify-between">

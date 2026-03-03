@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Send,
   Sparkles,
+  Tag,
   Trash2,
   X,
 } from "lucide-react";
@@ -31,6 +32,13 @@ import {
   useGetUserProfile,
   useLikePost,
 } from "../hooks/useQueries";
+import {
+  GENRES,
+  type Genre,
+  appendThoughtGenre,
+  parseThoughtGenre,
+  stripThoughtGenre,
+} from "../utils/genres";
 
 const MAX_CHARS = 500;
 
@@ -232,7 +240,8 @@ function CommentsPanel({
               rows={2}
               maxLength={1000}
               disabled={addThoughtComment.isPending}
-              className="flex-1 bg-arena-darker border-arena-border text-foreground placeholder:text-muted-foreground resize-none text-xs focus:border-arena-neon/50 focus:ring-arena-neon/20 transition-colors min-h-0"
+              className="flex-1 bg-arena-darker border-arena-border text-white placeholder:text-muted-foreground resize-none text-xs focus:border-arena-neon/50 focus:ring-arena-neon/20 transition-colors min-h-0 caret-white"
+              style={{ color: "#f0e6c8", WebkitTextFillColor: "#f0e6c8" }}
               aria-label="Comment text"
             />
             <Button
@@ -387,9 +396,26 @@ function PostCard({
 
       {/* Content */}
       {post.content && (
-        <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap mb-3">
-          {post.content}
-        </p>
+        <>
+          <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap mb-2">
+            {stripThoughtGenre(post.content)}
+          </p>
+          {parseThoughtGenre(post.content) && (
+            <div className="mb-3">
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border"
+                style={{
+                  borderColor: "oklch(0.78 0.18 85 / 0.4)",
+                  color: "oklch(0.88 0.18 85)",
+                  background: "oklch(0.78 0.18 85 / 0.08)",
+                }}
+              >
+                <Tag className="w-2.5 h-2.5" />
+                {parseThoughtGenre(post.content)}
+              </span>
+            </div>
+          )}
+        </>
       )}
 
       {/* Media */}
@@ -478,6 +504,7 @@ function Composer({ currentPrincipalStr }: { currentPrincipalStr: string }) {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const charsLeft = MAX_CHARS - content.length;
@@ -514,13 +541,19 @@ function Composer({ currentPrincipalStr }: { currentPrincipalStr: string }) {
       });
     }
 
+    const trimmed = content.trim();
+    const finalContent = selectedGenre
+      ? appendThoughtGenre(selectedGenre, trimmed)
+      : trimmed;
+
     createPost.mutate(
-      { content: content.trim(), media: mediaBlob },
+      { content: finalContent, media: mediaBlob },
       {
         onSuccess: () => {
           setContent("");
           clearMedia();
           setUploadProgress(0);
+          setSelectedGenre(null);
           toast.success("Post shared!");
         },
         onError: (err) => {
@@ -550,8 +583,9 @@ function Composer({ currentPrincipalStr }: { currentPrincipalStr: string }) {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="What's on your mind?"
-            className="bg-transparent border-none resize-none text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 p-0 text-base min-h-[80px]"
+            className="bg-transparent border-none resize-none text-white placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 p-0 text-base min-h-[80px] caret-white"
             maxLength={MAX_CHARS + 50}
+            style={{ color: "#f0e6c8", WebkitTextFillColor: "#f0e6c8" }}
           />
 
           {/* Media preview */}
@@ -616,9 +650,49 @@ function Composer({ currentPrincipalStr }: { currentPrincipalStr: string }) {
                 className="p-2 rounded-lg text-muted-foreground hover:text-arena-neon hover:bg-arena-neon/10 transition-all disabled:opacity-50"
                 aria-label="Attach image or video"
                 title="Attach image or video"
+                data-ocid="mind.upload_button"
               >
                 <Image className="w-4 h-4" />
               </button>
+
+              {/* Genre selector */}
+              <div className="flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                <select
+                  value={selectedGenre ?? ""}
+                  onChange={(e) =>
+                    setSelectedGenre((e.target.value as Genre) || null)
+                  }
+                  disabled={createPost.isPending}
+                  className="bg-arena-darker border border-arena-border text-white text-xs rounded-lg p-1.5 focus:outline-none focus:border-arena-neon/50 transition-colors disabled:opacity-50 max-w-[130px]"
+                  style={{
+                    color: selectedGenre ? "#e8c84a" : "#f0e6c8",
+                    WebkitTextFillColor: selectedGenre ? "#e8c84a" : "#f0e6c8",
+                  }}
+                  aria-label="Select genre"
+                  data-ocid="mind.genre.select"
+                >
+                  <option value="" style={{ color: "white" }}>
+                    Genre (optional)
+                  </option>
+                  {GENRES.map((g) => (
+                    <option key={g} value={g} style={{ color: "white" }}>
+                      {g}
+                    </option>
+                  ))}
+                </select>
+                {selectedGenre && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedGenre(null)}
+                    className="p-0.5 rounded text-muted-foreground hover:text-arena-neon transition-colors"
+                    aria-label="Clear genre"
+                    title="Clear genre"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-3">
@@ -661,8 +735,15 @@ export default function WhatsOnYourMindPage() {
   const { identity, login } = useInternetIdentity();
   const isAuthenticated = !!identity;
   const currentPrincipalStr = identity?.getPrincipal().toString();
+  const [activeGenre, setActiveGenre] = useState<Genre | null>(null);
 
   const { data: posts = [], isLoading, isError } = useGetAllPosts();
+
+  // Client-side genre filter
+  const filteredPosts =
+    activeGenre !== null
+      ? posts.filter((p) => parseThoughtGenre(p.content) === activeGenre)
+      : posts;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
@@ -674,6 +755,66 @@ export default function WhatsOnYourMindPage() {
         <p className="text-muted-foreground text-sm">
           Share your thoughts, ideas, and moments with the community.
         </p>
+      </div>
+
+      {/* Genre filter bar */}
+      <div
+        className="mb-5 -mx-4 px-4 py-2"
+        style={{
+          borderBottom: "1px solid oklch(0.78 0.18 85 / 0.08)",
+        }}
+      >
+        <div
+          className="flex gap-2 overflow-x-auto pb-1"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {/* All reset */}
+          <button
+            type="button"
+            onClick={() => setActiveGenre(null)}
+            className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-all"
+            style={
+              activeGenre === null
+                ? {
+                    borderColor: "oklch(0.78 0.18 85 / 0.7)",
+                    color: "oklch(0.88 0.18 85)",
+                    background: "oklch(0.78 0.18 85 / 0.1)",
+                  }
+                : {
+                    borderColor: "oklch(0.22 0.04 285)",
+                    color: "oklch(0.5 0.04 285)",
+                  }
+            }
+            data-ocid="mind.genre.all.tab"
+          >
+            All
+          </button>
+          {GENRES.map((genre) => (
+            <button
+              key={genre}
+              type="button"
+              onClick={() =>
+                setActiveGenre(activeGenre === genre ? null : genre)
+              }
+              className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-all"
+              style={
+                activeGenre === genre
+                  ? {
+                      borderColor: "oklch(0.78 0.18 85 / 0.7)",
+                      color: "oklch(0.88 0.18 85)",
+                      background: "oklch(0.78 0.18 85 / 0.1)",
+                    }
+                  : {
+                      borderColor: "oklch(0.22 0.04 285)",
+                      color: "oklch(0.5 0.04 285)",
+                    }
+              }
+              data-ocid="mind.genre.tab"
+            >
+              {genre}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Composer or login prompt */}
@@ -711,17 +852,24 @@ export default function WhatsOnYourMindPage() {
         <div className="text-center py-12 text-muted-foreground">
           <p>Failed to load posts. Please try again later.</p>
         </div>
-      ) : posts.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground">
+      ) : filteredPosts.length === 0 ? (
+        <div
+          className="text-center py-16 text-muted-foreground"
+          data-ocid="mind.empty_state"
+        >
           <Sparkles className="w-10 h-10 mx-auto mb-3 text-arena-neon/30" />
           <p className="text-base font-medium text-foreground/60">
-            No posts yet.
+            {activeGenre ? `No ${activeGenre} posts yet.` : "No posts yet."}
           </p>
-          <p className="text-sm mt-1">Be the first to share something!</p>
+          <p className="text-sm mt-1">
+            {activeGenre
+              ? "Try a different genre or be the first to post one!"
+              : "Be the first to share something!"}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {posts.map((post) => (
+          {filteredPosts.map((post) => (
             <PostCard
               key={post.id.toString()}
               post={post}
