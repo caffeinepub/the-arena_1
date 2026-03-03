@@ -1,15 +1,8 @@
 import { Link, useLocation, useRouterState } from "@tanstack/react-router";
-import {
-  Heart,
-  ListMusic,
-  Mail,
-  MessageSquare,
-  Tv2,
-  Upload,
-} from "lucide-react";
+import { Heart, ListMusic, MessageSquare, Tv2, Upload } from "lucide-react";
 import { useState } from "react";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
-import { useGetConversations, useGetPlaybackQueue } from "../hooks/useQueries";
+import { useGetPlaybackQueue } from "../hooks/useQueries";
 import LoginButton from "./LoginButton";
 import ProfileMenu from "./ProfileMenu";
 import QueuePanel from "./QueuePanel";
@@ -26,7 +19,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [queueOpen, setQueueOpen] = useState(false);
   const { data: queue = [] } = useGetPlaybackQueue();
   const { identity } = useInternetIdentity();
-  const { data: conversations = [] } = useGetConversations();
 
   // Extract currently playing content ID from the route if on a content detail page
   const routerState = useRouterState();
@@ -36,30 +28,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     ? contentDetailMatch[1]
     : undefined;
 
-  const callerPrincipalStr = identity?.getPrincipal().toString() ?? "";
-  const totalUnread = conversations.reduce((acc, conv) => {
-    return (
-      acc +
-      conv.messages.filter(
-        (m) => !m.isRead && m.recipient.toString() === callerPrincipalStr,
-      ).length
-    );
-  }, 0);
-
   const navLinks: NavLink[] = [
     { to: "/", label: "Feed", icon: <Tv2 className="w-4 h-4" /> },
     { to: "/upload", label: "Upload", icon: <Upload className="w-4 h-4" /> },
     { to: "/mind", label: "Mind", icon: <MessageSquare className="w-4 h-4" /> },
   ];
-
-  if (identity) {
-    navLinks.push({
-      to: "/messages",
-      label: "Messages",
-      icon: <Mail className="w-4 h-4" />,
-      badge: totalUnread,
-    });
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

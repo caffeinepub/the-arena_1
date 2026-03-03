@@ -185,18 +185,11 @@ export default function FeedPage() {
       <main className="max-w-6xl mx-auto px-4 py-8">
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {[
-              "sk-1",
-              "sk-2",
-              "sk-3",
-              "sk-4",
-              "sk-5",
-              "sk-6",
-              "sk-7",
-              "sk-8",
-            ].map((k) => (
-              <SkeletonCard key={k} />
-            ))}
+            {["sk1", "sk2", "sk3", "sk4", "sk5", "sk6", "sk7", "sk8"].map(
+              (skId) => (
+                <SkeletonCard key={skId} />
+              ),
+            )}
           </div>
         ) : filteredContent.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">

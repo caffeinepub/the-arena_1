@@ -2,14 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Principal } from "@dfinity/principal";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  ArrowLeft,
-  Loader2,
-  MessageCircle,
-  UserCheck,
-  UserRound,
-  Users,
-} from "lucide-react";
+import { ArrowLeft, Loader2, UserCheck, UserRound, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
@@ -105,13 +98,6 @@ export default function UserProfileView({
           err instanceof Error ? err.message : "Failed to unfollow user";
         toast.error(msg);
       },
-    });
-  };
-
-  const handleSendMessage = () => {
-    navigate({
-      to: "/messages",
-      search: { partner: targetPrincipal.toString() },
     });
   };
 
@@ -245,16 +231,6 @@ export default function UserProfileView({
                     )}
                   </Button>
                 )}
-
-                {/* Send Message button */}
-                <Button
-                  onClick={handleSendMessage}
-                  variant="outline"
-                  className="rounded-full border-arena-neon/30 text-arena-neon hover:bg-arena-neon/10 hover:border-arena-neon transition-all min-w-[110px]"
-                >
-                  <MessageCircle className="w-4 h-4 mr-1.5" />
-                  Message
-                </Button>
               </div>
             )}
 

@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Principal } from "@dfinity/principal";
-import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ArrowLeft, MessageCircle, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { Conversation } from "../backend";
@@ -152,7 +151,6 @@ function ConversationRow({
 
 export default function MessagesPage() {
   const { identity } = useInternetIdentity();
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPartnerStr, setSelectedPartnerStr] = useState<string | null>(
     null,
@@ -160,8 +158,8 @@ export default function MessagesPage() {
   const [mobileShowConversation, setMobileShowConversation] = useState(false);
 
   // Read ?partner= query param to open a specific conversation
-  const search = useSearch({ from: "/messages" }) as { partner?: string };
-  const partnerFromQuery = search?.partner;
+  const partnerFromQuery =
+    new URLSearchParams(window.location.search).get("partner") ?? undefined;
 
   const { data: conversations = [], isLoading: conversationsLoading } =
     useGetConversations();
@@ -208,13 +206,17 @@ export default function MessagesPage() {
   const handleSelectConversation = (partnerStr: string) => {
     setSelectedPartnerStr(partnerStr);
     setMobileShowConversation(true);
-    navigate({ to: "/messages", search: { partner: partnerStr } });
+    const url = new URL(window.location.href);
+    url.searchParams.set("partner", partnerStr);
+    window.history.replaceState(null, "", url.toString());
   };
 
   const handleBackToList = () => {
     setMobileShowConversation(false);
     setSelectedPartnerStr(null);
-    navigate({ to: "/messages", search: { partner: undefined } });
+    const url = new URL(window.location.href);
+    url.searchParams.delete("partner");
+    window.history.replaceState(null, "", url.toString());
   };
 
   if (!identity) {
@@ -261,8 +263,8 @@ export default function MessagesPage() {
           <div className="flex-1 overflow-y-auto">
             {conversationsLoading ? (
               <div className="p-4 flex flex-col gap-3">
-                {["sk-1", "sk-2", "sk-3", "sk-4"].map((skKey) => (
-                  <div key={skKey} className="flex items-center gap-3">
+                {["sk1", "sk2", "sk3", "sk4"].map((skId) => (
+                  <div key={skId} className="flex items-center gap-3">
                     <Skeleton className="w-11 h-11 rounded-full flex-shrink-0" />
                     <div className="flex-1">
                       <Skeleton className="h-4 w-28 mb-1.5" />

@@ -3,8 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Principal } from "@dfinity/principal";
 import { Loader2, Send } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Message } from "../backend";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import {
@@ -155,8 +154,10 @@ export default function ConversationView({
     });
   }, [messages]);
 
-  // Mark unread messages as read when conversation opens
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally run only when message count changes
+  // Mark unread messages as read when conversation opens.
+  // Intentionally depends only on messages?.length to avoid re-running on
+  // every render — callerPrincipal and partnerPrincipal are stable references.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional partial deps
   useEffect(() => {
     if (!messages || !callerPrincipal) return;
     messages.forEach((msg, index) => {
@@ -178,15 +179,15 @@ export default function ConversationView({
         });
       }
     });
-  }, [messages?.length]);
+  }, [messages?.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Scroll to bottom when messages change
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally using length as scroll trigger
+  // biome-ignore lint/correctness/useExhaustiveDependencies: sortedMessages.length is intentional — only scroll when count changes
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [sortedMessages.length]);
 
-  const handleSend = useCallback(() => {
+  const handleSend = () => {
     const trimmed = inputText.trim();
     if (!trimmed || sendMessage.isPending) return;
     sendMessage.mutate(
@@ -199,27 +200,16 @@ export default function ConversationView({
             100,
           );
         },
-        onError: (err) => {
-          const msg = err instanceof Error ? err.message : String(err);
-          if (msg.includes("not registered") || msg.includes("Unauthorized")) {
-            toast.error("You need to set up your profile before messaging.");
-          } else {
-            toast.error("Failed to send message. Please try again.");
-          }
-        },
       },
     );
-  }, [inputText, sendMessage, partnerPrincipal]);
+  };
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSend();
-      }
-    },
-    [handleSend],
-  );
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -244,9 +234,9 @@ export default function ConversationView({
       <ScrollArea className="flex-1 px-4 py-4">
         {messagesLoading ? (
           <div className="flex flex-col gap-3">
-            {["sk-1", "sk-2", "sk-3", "sk-4"].map((skKey, i) => (
+            {["s1", "s2", "s3", "s4"].map((skId, i) => (
               <div
-                key={skKey}
+                key={skId}
                 className={`flex items-end gap-2 ${i % 2 === 0 ? "flex-row" : "flex-row-reverse"}`}
               >
                 <Skeleton className="w-7 h-7 rounded-full flex-shrink-0" />
@@ -292,27 +282,19 @@ export default function ConversationView({
         <div className="flex items-end gap-2">
           <textarea
             value={inputText}
-            onChange={(e) => {
-              setInputText(e.target.value);
-              // Auto-resize
-              const el = e.target;
-              el.style.height = "auto";
-              el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
-            }}
+            onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={`Message ${partnerName}…`}
             rows={1}
-            className="flex-1 resize-none bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-arena-neon/50 focus:border-arena-neon/50 transition-colors overflow-y-auto"
-            style={{ minHeight: "40px", maxHeight: "120px", height: "40px" }}
+            className="flex-1 resize-none bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-arena-neon/50 focus:border-arena-neon/50 transition-colors min-h-[40px] max-h-[120px] overflow-y-auto"
+            style={{ fieldSizing: "content" } as React.CSSProperties}
             disabled={sendMessage.isPending}
-            data-ocid="message.input"
           />
           <Button
             onClick={handleSend}
             disabled={!inputText.trim() || sendMessage.isPending}
             size="icon"
             className="bg-arena-neon text-arena-darker hover:bg-arena-neon/90 shadow-neon rounded-xl flex-shrink-0 h-10 w-10"
-            data-ocid="message.submit_button"
           >
             {sendMessage.isPending ? (
               <Loader2 className="w-4 h-4 animate-spin" />

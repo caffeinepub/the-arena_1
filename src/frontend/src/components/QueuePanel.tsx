@@ -110,13 +110,10 @@ export default function QueuePanel({
     <>
       {/* Backdrop */}
       {isOpen && (
+        // biome-ignore lint/a11y/useKeyWithClickEvents: backdrop dismiss handled via Escape on panel
         <div
           className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
           onClick={onClose}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") onClose();
-          }}
-          aria-hidden="true"
         />
       )}
 
@@ -207,113 +204,111 @@ export default function QueuePanel({
                       : "/assets/generated/default-video-thumb.dim_400x400.png";
 
                 return (
-                  <li key={contentId}>
-                    <div
-                      className={`group flex items-center gap-3 p-2 rounded-lg border transition-all duration-200 cursor-pointer ${
-                        isPlaying
-                          ? "border-arena-neon/60 bg-arena-neon/10 shadow-[0_0_12px_rgba(212,175,55,0.2)]"
-                          : "border-arena-border bg-card hover:border-arena-neon/30 hover:bg-arena-neon/5"
-                      }`}
-                      onClick={() => handlePlayItem(contentId)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ")
-                          handlePlayItem(contentId);
-                      }}
-                    >
-                      {/* Thumbnail */}
-                      <div className="relative w-14 h-14 rounded overflow-hidden flex-shrink-0 bg-arena-surface">
-                        <img
-                          src={thumbnailUrl}
-                          alt={content?.title ?? "Unknown"}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = isAudio
-                              ? "/assets/generated/default-audio-thumb.dim_400x400.png"
-                              : "/assets/generated/default-video-thumb.dim_400x400.png";
-                          }}
-                        />
-                        {isPlaying && (
-                          <div className="absolute inset-0 bg-arena-neon/20 flex items-center justify-center">
-                            <div className="w-4 h-4 rounded-full bg-arena-neon flex items-center justify-center">
-                              <svg
-                                className="w-2 h-2 text-arena-darker ml-0.5"
-                                fill="currentColor"
-                                viewBox="0 0 24 24"
-                                aria-label="Now playing"
-                                role="img"
-                              >
-                                <title>Now playing</title>
-                                <path d="M8 5v14l11-7z" />
-                              </svg>
-                            </div>
+                  <li
+                    key={contentId}
+                    className={`group flex items-center gap-3 p-2 rounded-lg border transition-all duration-200 cursor-pointer ${
+                      isPlaying
+                        ? "border-arena-neon/60 bg-arena-neon/10 shadow-[0_0_12px_rgba(212,175,55,0.2)]"
+                        : "border-arena-border bg-card hover:border-arena-neon/30 hover:bg-arena-neon/5"
+                    }`}
+                    onClick={() => handlePlayItem(contentId)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ")
+                        handlePlayItem(contentId);
+                    }}
+                  >
+                    {/* Thumbnail */}
+                    <div className="relative w-14 h-14 rounded overflow-hidden flex-shrink-0 bg-arena-surface">
+                      <img
+                        src={thumbnailUrl}
+                        alt={content?.title ?? "Unknown"}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = isAudio
+                            ? "/assets/generated/default-audio-thumb.dim_400x400.png"
+                            : "/assets/generated/default-video-thumb.dim_400x400.png";
+                        }}
+                      />
+                      {isPlaying && (
+                        <div className="absolute inset-0 bg-arena-neon/20 flex items-center justify-center">
+                          <div className="w-4 h-4 rounded-full bg-arena-neon flex items-center justify-center">
+                            <svg
+                              className="w-2 h-2 text-arena-darker ml-0.5"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                              aria-label="Now playing"
+                            >
+                              <title>Now playing</title>
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
                           </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={`text-sm font-semibold truncate leading-tight ${isPlaying ? "text-arena-neon" : "text-foreground"}`}
+                      >
+                        {content?.title ?? `${contentId.slice(0, 12)}…`}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span
+                          className={`inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded font-bold ${
+                            isAudio
+                              ? "bg-arena-neon/15 text-arena-neon border border-arena-neon/30"
+                              : "bg-blue-500/15 text-blue-300 border border-blue-400/30"
+                          }`}
+                        >
+                          {isAudio ? (
+                            <Music className="w-2.5 h-2.5" />
+                          ) : (
+                            <Video className="w-2.5 h-2.5" />
+                          )}
+                          {label}
+                        </span>
+                        {isPlaying && (
+                          <span className="text-xs text-arena-neon font-semibold">
+                            Now Playing
+                          </span>
                         )}
                       </div>
+                    </div>
 
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={`text-sm font-semibold truncate leading-tight ${isPlaying ? "text-arena-neon" : "text-foreground"}`}
-                        >
-                          {content?.title ?? `${contentId.slice(0, 12)}…`}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <span
-                            className={`inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded font-bold ${
-                              isAudio
-                                ? "bg-arena-neon/15 text-arena-neon border border-arena-neon/30"
-                                : "bg-blue-500/15 text-blue-300 border border-blue-400/30"
-                            }`}
-                          >
-                            {isAudio ? (
-                              <Music className="w-2.5 h-2.5" />
-                            ) : (
-                              <Video className="w-2.5 h-2.5" />
-                            )}
-                            {label}
-                          </span>
-                          {isPlaying && (
-                            <span className="text-xs text-arena-neon font-semibold">
-                              Now Playing
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div
-                        className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => e.stopPropagation()}
+                    {/* Actions */}
+                    <div
+                      className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleMoveUp(index)}
+                        disabled={index === 0 || isMoving}
+                        className="p-1 rounded text-muted-foreground hover:text-arena-neon disabled:opacity-30 transition-colors"
+                        aria-label="Move up"
                       >
-                        <button
-                          type="button"
-                          onClick={() => handleMoveUp(index)}
-                          disabled={index === 0 || isMoving}
-                          className="p-1 rounded text-muted-foreground hover:text-arena-neon disabled:opacity-30 transition-colors"
-                          aria-label="Move up"
-                        >
-                          <ChevronUp className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleMoveDown(index)}
-                          disabled={index >= queue.length - 1 || isMoving}
-                          className="p-1 rounded text-muted-foreground hover:text-arena-neon disabled:opacity-30 transition-colors"
-                          aria-label="Move down"
-                        >
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRemove(index)}
-                          disabled={isRemoving}
-                          className="p-1 rounded text-muted-foreground hover:text-destructive disabled:opacity-30 transition-colors"
-                          aria-label="Remove from queue"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveDown(index)}
+                        disabled={index >= queue.length - 1 || isMoving}
+                        className="p-1 rounded text-muted-foreground hover:text-arena-neon disabled:opacity-30 transition-colors"
+                        aria-label="Move down"
+                      >
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemove(index)}
+                        disabled={isRemoving}
+                        className="p-1 rounded text-muted-foreground hover:text-destructive disabled:opacity-30 transition-colors"
+                        aria-label="Remove from queue"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </li>
                 );
