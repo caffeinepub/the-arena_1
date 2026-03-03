@@ -1,57 +1,38 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add message timestamps and reply button to conversation view",
+  "title": "Add keyboard send (Enter key) and Send button to message input",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Display a timestamp on every message bubble in ConversationView showing when the message was sent or received",
+      "summary": "Update message input in ConversationView to support Enter key to send (Shift+Enter for newline)",
       "acceptanceCriteria": [
-        "Every message bubble in ConversationView displays a timestamp below it",
-        "Timestamps show time only (e.g., '2:45 PM') for messages sent today",
-        "Timestamps show day and time (e.g., 'Mon 2:45 PM') for messages older than today",
-        "Timestamps are visually subtle (muted/small text) and do not overwhelm the message content",
-        "Both sent and received messages show timestamps"
+        "Pressing Enter in the message input field sends the message without requiring a button click.",
+        "Pressing Shift+Enter inserts a newline in the message input instead of sending.",
+        "After sending via Enter, the input field is cleared."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/ConversationView.tsx",
           "operation": "modify",
-          "description": "Add timestamp rendering below each message bubble. Create a utility function to format the timestamp field (bigint nanoseconds) into human-readable format: show time only (e.g., '2:45 PM') for messages sent today, or day and time (e.g., 'Mon 2:45 PM') for older messages. Style timestamps with muted/small text to keep them visually subtle. Apply formatting to both sent and received message bubbles."
+          "description": "Add onKeyDown event handler to the message input textarea that detects Enter key presses. If Enter is pressed without Shift, prevent default behavior, trigger the sendMessage mutation (only if input is non-empty), and clear the input. If Shift+Enter is pressed, allow default newline insertion behavior."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Add a Reply button to every message bubble in ConversationView",
+      "summary": "Add a visible Send button alongside the message input in ConversationView",
       "acceptanceCriteria": [
-        "Every message bubble in ConversationView has a Reply button visible on hover or as a persistent icon",
-        "Clicking Reply populates the message input with a quoted reference to the original message content",
-        "The message input is focused automatically after clicking Reply",
-        "A visual indicator (e.g., a reply-to banner above the input) shows which message is being replied to, with an option to cancel the reply",
-        "The reply context is cleared after the reply message is sent"
+        "A Send button is visible next to the message text input at all times.",
+        "Clicking the Send button submits the current message.",
+        "The Send button is disabled when the input is empty.",
+        "After sending via the button, the input field is cleared and focus returns to the input."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/ConversationView.tsx",
           "operation": "modify",
-          "description": "Add a Reply button to each message bubble, shown on hover or as a persistent icon. Implement click handler that captures the message content and stores it in local state as the reply context. Prepend quoted text (e.g., '> [original message]\\n') to the message input field. Auto-focus the input field after setting the reply context. Add a reply-to banner UI above the input showing the quoted message with a cancel/close button to clear the context. Modify the send message handler to clear the reply context after successfully sending the reply."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Ensure the message data model used in ConversationView exposes a timestamp field from the backend",
-      "acceptanceCriteria": [
-        "The Message type in the backend includes a timestamp field (Int or Time)",
-        "The timestamp is returned in the conversation query results",
-        "The frontend ConversationView receives and renders the timestamp for each message"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/ConversationView.tsx",
-          "operation": "modify",
-          "description": "Verify that the Message type received from backend includes the timestamp field (bigint nanoseconds as shown in backend.d.ts). Confirm that the timestamp is accessible in the message data passed to ConversationView from the useGetMessages hook. This file operation ensures the timestamp field flows through to the rendering logic added in REQ-1."
+          "description": "Add a Send button adjacent to the message textarea in the input area. Style the button consistently with the Arena neon dark theme using existing design tokens (e.g., arena-accent color, neon glow effects). Disable the button when the message input is empty (trimmed). On click, invoke the sendMessage mutation, clear the input, and return focus to the textarea. Ensure the button layout integrates smoothly with the existing message input container (e.g., flex row with textarea and button side-by-side)."
         }
       ]
     }

@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Principal } from '@dfinity/principal';
-import { Send, Loader2, Reply, X } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -18,11 +18,6 @@ interface ConversationViewProps {
   partnerPrincipal: Principal;
 }
 
-interface ReplyContext {
-  senderName: string;
-  content: string;
-}
-
 function formatTime(timestamp: bigint): string {
   const ms = Number(timestamp / 1_000_000n);
   const date = new Date(ms);
@@ -31,14 +26,7 @@ function formatTime(timestamp: bigint): string {
   if (isToday) {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
-  // Show abbreviated weekday + time for messages within the last 7 days, otherwise date + time
-  const diffDays = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
-  if (diffDays < 7) {
-    return date.toLocaleDateString([], { weekday: 'short' }) + ' ' +
-      date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' +
-    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 function AvatarBubble({ principal, size = 'sm' }: { principal: Principal; size?: 'sm' | 'md' }) {
@@ -78,51 +66,28 @@ function MessageBubble({
   message,
   isOwn,
   callerPrincipal,
-  onReply,
 }: {
   message: Message;
   isOwn: boolean;
   callerPrincipal: Principal;
-  onReply: (senderName: string, content: string) => void;
 }) {
-  const [hovered, setHovered] = useState(false);
   const senderPrincipal = isOwn ? callerPrincipal : message.sender;
   const { data: profile } = useGetUserProfile(senderPrincipal);
   const displayName = profile?.name ?? senderPrincipal.toString().slice(0, 8) + '…';
 
-  const handleReply = () => {
-    onReply(displayName, message.content);
-  };
-
   return (
-    <div
-      className={`flex items-end gap-2 group ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+    <div className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
       <AvatarBubble principal={senderPrincipal} size="sm" />
       <div className={`flex flex-col gap-0.5 max-w-[70%] ${isOwn ? 'items-end' : 'items-start'}`}>
         <span className="text-[10px] text-muted-foreground px-1">{displayName}</span>
-        <div className={`flex items-end gap-1.5 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-          <div
-            className={`px-3 py-2 rounded-2xl text-sm leading-relaxed break-words ${
-              isOwn
-                ? 'bg-arena-neon text-arena-darker rounded-br-sm font-medium'
-                : 'bg-arena-surface border border-border text-foreground rounded-bl-sm'
-            }`}
-          >
-            {message.content}
-          </div>
-          {/* Reply button - visible on hover */}
-          <button
-            onClick={handleReply}
-            title="Reply"
-            className={`flex-shrink-0 p-1 rounded-full transition-all duration-150 text-muted-foreground hover:text-arena-neon hover:bg-arena-neon/10 ${
-              hovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
-            }`}
-          >
-            <Reply className="w-3.5 h-3.5" />
-          </button>
+        <div
+          className={`px-3 py-2 rounded-2xl text-sm leading-relaxed break-words ${
+            isOwn
+              ? 'bg-arena-neon text-arena-darker rounded-br-sm font-medium'
+              : 'bg-arena-surface border border-border text-foreground rounded-bl-sm'
+          }`}
+        >
+          {message.content}
         </div>
         <span className="text-[10px] text-muted-foreground px-1">
           {formatTime(message.timestamp)}
@@ -138,9 +103,7 @@ function MessageBubble({
 export default function ConversationView({ partnerPrincipal }: ConversationViewProps) {
   const { identity } = useInternetIdentity();
   const [inputText, setInputText] = useState('');
-  const [replyContext, setReplyContext] = useState<ReplyContext | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
   const callerPrincipal = identity?.getPrincipal();
 
   const { data: messages, isLoading: messagesLoading } = useGetMessages(partnerPrincipal);
@@ -165,6 +128,7 @@ export default function ConversationView({ partnerPrincipal }: ConversationViewP
     if (!messages || !callerPrincipal) return;
     messages.forEach((msg, index) => {
       if (!msg.isRead && msg.recipient.toString() === callerPrincipal.toString()) {
+        // Build the conversation key (sorted participants)
         const p1Str = callerPrincipal.toString();
         const p2Str = partnerPrincipal.toString();
         const conversationKey = p1Str < p2Str
@@ -186,36 +150,14 @@ export default function ConversationView({ partnerPrincipal }: ConversationViewP
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [sortedMessages.length]);
 
-  const handleReply = useCallback((senderName: string, content: string) => {
-    setReplyContext({ senderName, content });
-    // Focus the input after setting reply context
-    setTimeout(() => inputRef.current?.focus(), 50);
-  }, []);
-
-  const handleCancelReply = () => {
-    setReplyContext(null);
-  };
-
   const handleSend = () => {
     const trimmed = inputText.trim();
     if (!trimmed || sendMessage.isPending) return;
-
-    // Prepend quoted reply context if present
-    let finalContent = trimmed;
-    if (replyContext) {
-      const quotedLines = replyContext.content
-        .split('\n')
-        .map((line) => `> ${line}`)
-        .join('\n');
-      finalContent = `${quotedLines}\n\n${trimmed}`;
-    }
-
     sendMessage.mutate(
-      { recipient: partnerPrincipal, content: finalContent },
+      { recipient: partnerPrincipal, content: trimmed },
       {
         onSuccess: () => {
           setInputText('');
-          setReplyContext(null);
           setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
         },
       }
@@ -277,7 +219,6 @@ export default function ConversationView({ partnerPrincipal }: ConversationViewP
                   message={msg}
                   isOwn={isOwn}
                   callerPrincipal={callerPrincipal!}
-                  onReply={handleReply}
                 />
               );
             })}
@@ -288,37 +229,12 @@ export default function ConversationView({ partnerPrincipal }: ConversationViewP
 
       {/* Input area */}
       <div className="px-4 py-3 border-t border-border bg-arena-surface/80">
-        {/* Reply-to banner */}
-        {replyContext && (
-          <div className="flex items-start gap-2 mb-2 px-3 py-2 rounded-lg bg-arena-neon/5 border border-arena-neon/20">
-            <Reply className="w-3.5 h-3.5 text-arena-neon flex-shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-semibold text-arena-neon mb-0.5">
-                Replying to {replyContext.senderName}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {replyContext.content.length > 80
-                  ? replyContext.content.slice(0, 80) + '…'
-                  : replyContext.content}
-              </p>
-            </div>
-            <button
-              onClick={handleCancelReply}
-              className="flex-shrink-0 p-0.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-border transition-colors"
-              title="Cancel reply"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-
         <div className="flex items-end gap-2">
           <textarea
-            ref={inputRef}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={replyContext ? `Reply to ${replyContext.senderName}…` : `Message ${partnerName}…`}
+            placeholder={`Message ${partnerName}…`}
             rows={1}
             className="flex-1 resize-none bg-background border border-border rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-arena-neon/50 focus:border-arena-neon/50 transition-colors min-h-[40px] max-h-[120px] overflow-y-auto"
             style={{ fieldSizing: 'content' } as React.CSSProperties}

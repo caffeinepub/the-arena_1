@@ -1,52 +1,37 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "A messaging application where users can send and receive messages. The UI includes timestamps for when messages are sent and received, and a reply button on every message.",
+  "summary": "Messaging application with user-to-user conversations. Currently adding keyboard and send button/tab functionality to the message input.",
   "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
-  "existing_features": [
-    {
-      "id": "feature-display-a-timestamp-on-every-message-bubble-in-conversationview-showing-when-the-message-was-sent-or-received-the-timestamp-should-be-formatted-in-a-human-readable-way-e-g-2-45-pm-for-today-s-messages-or-mon-2-45-pm-for-older-messages-and-positioned-below-each-message-bubble",
-      "title": "Display a timestamp on every message bubble in ConversationView showing when the message was sent or received. The timestamp should be formatted in a human-readable way (e.g., '2:45 PM' for today's messages, or 'Mon 2:45 PM' for older messages) and positioned below each message bubble.",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-reply-button-to-every-message-bubble-in-conversationview-when-clicked-it-should-populate-the-message-input-field-with-a-quoted-preview-of-the-original-message-e-g-prepend-original-message-text-n-to-the-input-and-focus-the-input-so-the-user-can-type-their-reply",
-      "title": "Add a Reply button to every message bubble in ConversationView. When clicked, it should populate the message input field with a quoted preview of the original message (e.g., prepend '> [original message text]\\n' to the input) and focus the input so the user can type their reply.",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-the-message-data-model-used-in-conversationview-exposes-a-timestamp-field-createdat-or-similar-from-the-backend-so-it-can-be-rendered-in-the-frontend-if-the-existing-message-type-already-returns-a-timestamp-confirm-it-is-passed-through-to-the-conversationview-component-and-each-message-bubble",
-      "title": "Ensure the message data model used in ConversationView exposes a timestamp field (createdAt or similar) from the backend so it can be rendered in the frontend. If the existing Message type already returns a timestamp, confirm it is passed through to the ConversationView component and each message bubble.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    }
-  ],
+  "existing_features": [],
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Show timestamps for when messages are sent and received",
+      "summary": "Add keyboard and send tab/button to message input",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Add a reply button to every message",
-      "reqIds": [],
+      "summary": "In the ConversationView component, update the message input area so that pressing the Enter key (without Shift) submits and sends the message, while Shift+Enter inserts a newline.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "In the ConversationView component, ensure a visible 'Send' button is displayed alongside the message input. The button must be clearly styled and clickable to submit the message, consistent with the Arena neon dark theme.",
+      "reqIds": [
+        "REQ-2"
+      ],
       "status": "pending"
     }
   ],
   "gameProjectType": "none",
-  "projectName": "Arena",
+  "projectName": "The Arena",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }
