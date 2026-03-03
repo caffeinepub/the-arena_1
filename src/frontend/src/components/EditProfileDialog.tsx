@@ -60,8 +60,6 @@ export default function EditProfileDialog({
       setPicturePreview(null);
       setRemovePicture(false);
     }
-    // picturePreview is intentionally included to allow revocation on close
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, userProfile?.name, userProfile?.bio, picturePreview]);
 
   // Build a blob URL from the current stored picture bytes

@@ -1,6 +1,6 @@
 import { File, FileAudio, FileVideo, Image, Upload, X } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 type FileCategory = "audio" | "video" | "image" | "media" | "any";
 
@@ -65,7 +65,12 @@ export default function FileUploadInput({
   selectedFile,
   className = "",
 }: FileUploadInputProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  const handleClick = () => {
+    inputRef.current?.click();
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -97,25 +102,29 @@ export default function FileUploadInput({
 
   return (
     <div className={className}>
-      <p className="block text-sm font-medium text-foreground/80 mb-2">
+      <label
+        htmlFor="file-upload-input"
+        className="block text-sm font-medium text-foreground/80 mb-2"
+      >
         {label}
-      </p>
+      </label>
       {/* Hidden file input — no accept restriction, no size limit */}
       <input
+        ref={inputRef}
         id="file-upload-input"
         type="file"
         accept="*"
         className="hidden"
         onChange={handleFileChange}
       />
-      {/* Label is the drop zone — clicking it natively activates the associated input */}
-      <label
-        htmlFor="file-upload-input"
+      <div
+        onClick={handleClick}
+        onKeyDown={(e) => e.key === "Enter" && handleClick()}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`
-          relative border-2 border-dashed rounded-lg p-6 cursor-pointer transition-all duration-200 block
+          relative border-2 border-dashed rounded-lg p-6 cursor-pointer transition-all duration-200
           ${
             isDragging
               ? "border-arena-neon bg-arena-neon/10"
@@ -162,7 +171,7 @@ export default function FileUploadInput({
             </div>
           </div>
         )}
-      </label>
+      </div>
     </div>
   );
 }

@@ -211,7 +211,7 @@ export default function MediaPlayer({
   }, [isVideo]);
 
   // Reset state when track changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: track.id is the correct dep — setters are stable
+  // biome-ignore lint/correctness/useExhaustiveDependencies: track.id is intentionally the only dep; setters are stable
   useEffect(() => {
     setIsPlaying(false);
     setCurrentTime(0);

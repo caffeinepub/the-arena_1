@@ -110,10 +110,13 @@ export default function QueuePanel({
     <>
       {/* Backdrop */}
       {isOpen && (
-        // biome-ignore lint/a11y/useKeyWithClickEvents: backdrop dismiss handled via Escape on panel
         <div
+          role="button"
+          tabIndex={0}
           className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
           onClick={onClose}
+          onKeyDown={(e) => e.key === "Escape" && onClose()}
+          aria-label="Close queue"
         />
       )}
 
@@ -187,7 +190,7 @@ export default function QueuePanel({
               </p>
             </div>
           ) : (
-            <ul className="p-3 space-y-2">
+            <div className="p-3 space-y-2">
               {queue.map((contentId, index) => {
                 const content = contentMap.get(contentId);
                 const isPlaying = contentId === currentlyPlayingContentId;
@@ -204,7 +207,7 @@ export default function QueuePanel({
                       : "/assets/generated/default-video-thumb.dim_400x400.png";
 
                 return (
-                  <li
+                  <div
                     key={contentId}
                     className={`group flex items-center gap-3 p-2 rounded-lg border transition-all duration-200 cursor-pointer ${
                       isPlaying
@@ -212,10 +215,9 @@ export default function QueuePanel({
                         : "border-arena-border bg-card hover:border-arena-neon/30 hover:bg-arena-neon/5"
                     }`}
                     onClick={() => handlePlayItem(contentId)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ")
-                        handlePlayItem(contentId);
-                    }}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handlePlayItem(contentId)
+                    }
                   >
                     {/* Thumbnail */}
                     <div className="relative w-14 h-14 rounded overflow-hidden flex-shrink-0 bg-arena-surface">
@@ -237,6 +239,7 @@ export default function QueuePanel({
                               fill="currentColor"
                               viewBox="0 0 24 24"
                               aria-label="Now playing"
+                              role="img"
                             >
                               <title>Now playing</title>
                               <path d="M8 5v14l11-7z" />
@@ -281,6 +284,7 @@ export default function QueuePanel({
                       className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => e.stopPropagation()}
                       onKeyDown={(e) => e.stopPropagation()}
+                      role="presentation"
                     >
                       <button
                         type="button"
@@ -310,10 +314,10 @@ export default function QueuePanel({
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                  </li>
+                  </div>
                 );
               })}
-            </ul>
+            </div>
           )}
         </ScrollArea>
       </div>

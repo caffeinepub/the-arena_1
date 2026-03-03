@@ -1,5 +1,5 @@
 import { Link, useLocation, useRouterState } from "@tanstack/react-router";
-import { Heart, ListMusic, MessageSquare, Tv2, Upload } from "lucide-react";
+import { Crown, ListMusic, MessageSquare, Tv2, Upload } from "lucide-react";
 import { useState } from "react";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useGetPlaybackQueue } from "../hooks/useQueries";
@@ -37,25 +37,40 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-arena-border bg-arena-surface/90 backdrop-blur-md">
+      <header
+        className="sticky top-0 z-50 backdrop-blur-md"
+        style={{
+          background: "oklch(0.07 0.02 285 / 0.92)",
+          borderBottom: "1px solid oklch(0.78 0.18 85 / 0.25)",
+          boxShadow: "0 2px 24px oklch(0.35 0.18 295 / 0.3)",
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <img
-                src="/assets/generated/arena-logo.dim_400x120.png"
-                alt="The Arena"
-                className="h-9 w-auto object-contain"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  target.style.display = "none";
-                  const sibling = target.nextElementSibling as HTMLElement;
-                  if (sibling) sibling.style.display = "block";
+            <Link
+              to="/"
+              className="flex items-center gap-3 group"
+              data-ocid="nav.home.link"
+            >
+              <Crown
+                className="w-6 h-6 flex-shrink-0"
+                style={{
+                  color: "oklch(0.78 0.18 85)",
+                  filter: "drop-shadow(0 0 6px oklch(0.78 0.18 85 / 0.7))",
                 }}
               />
               <span
-                className="font-display text-3xl text-arena-neon neon-text hidden"
-                style={{ display: "none" }}
+                className="font-display text-2xl font-bold tracking-widest uppercase"
+                style={{
+                  background:
+                    "linear-gradient(135deg, oklch(0.95 0.12 90), oklch(0.78 0.18 85), oklch(0.62 0.14 75))",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  filter: "drop-shadow(0 0 12px oklch(0.78 0.18 85 / 0.5))",
+                  letterSpacing: "0.12em",
+                }}
               >
                 THE ARENA
               </span>
@@ -70,16 +85,32 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <Link
                     key={link.to}
                     to={link.to}
-                    className={`relative flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200 ${
+                    data-ocid={`nav.${link.label.toLowerCase()}.link`}
+                    className="relative flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-all duration-200"
+                    style={
                       isActive
-                        ? "bg-arena-neon/10 text-arena-neon border border-arena-neon/30 neon-glow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    }`}
+                        ? {
+                            background: "oklch(0.78 0.18 85 / 0.12)",
+                            color: "oklch(0.88 0.18 85)",
+                            border: "1px solid oklch(0.78 0.18 85 / 0.4)",
+                            boxShadow: "0 0 8px oklch(0.78 0.18 85 / 0.2)",
+                          }
+                        : {
+                            color: "oklch(0.65 0.04 285)",
+                            border: "1px solid transparent",
+                          }
+                    }
                   >
                     {link.icon}
                     {link.label}
                     {badge > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] flex items-center justify-center bg-arena-neon text-arena-darker text-[9px] font-bold rounded-full px-0.5 leading-none">
+                      <span
+                        className="absolute -top-1 -right-1 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-bold rounded-full px-0.5 leading-none"
+                        style={{
+                          background: "oklch(0.78 0.18 85)",
+                          color: "oklch(0.1 0.03 285)",
+                        }}
+                      >
                         {badge > 99 ? "99+" : badge}
                       </span>
                     )}
@@ -94,13 +125,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => setQueueOpen(true)}
-                className="relative p-2 rounded-md text-muted-foreground hover:text-arena-neon hover:bg-arena-neon/10 transition-all duration-200 group"
+                className="relative p-2 rounded-md transition-all duration-200 group"
+                style={{ color: "oklch(0.6 0.04 285)" }}
                 aria-label="Open playback queue"
                 title="Playback Queue"
+                data-ocid="nav.queue.button"
               >
-                <ListMusic className="w-5 h-5 group-hover:drop-shadow-[0_0_6px_rgba(212,175,55,0.8)] transition-all" />
+                <ListMusic className="w-5 h-5" />
                 {queue.length > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-arena-neon text-arena-darker text-[10px] font-bold rounded-full px-1 leading-none">
+                  <span
+                    className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold rounded-full px-1 leading-none"
+                    style={{
+                      background: "oklch(0.78 0.18 85)",
+                      color: "oklch(0.1 0.03 285)",
+                    }}
+                  >
                     {queue.length > 99 ? "99+" : queue.length}
                   </span>
                 )}
@@ -111,7 +150,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Mobile nav */}
-        <div className="sm:hidden border-t border-arena-border">
+        <div
+          className="sm:hidden"
+          style={{ borderTop: "1px solid oklch(0.78 0.18 85 / 0.15)" }}
+        >
           <div className="flex">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.to;
@@ -120,16 +162,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`relative flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all ${
+                  data-ocid={`nav.mobile.${link.label.toLowerCase()}.link`}
+                  className="relative flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all"
+                  style={
                     isActive
-                      ? "text-arena-neon border-b-2 border-arena-neon"
-                      : "text-muted-foreground"
-                  }`}
+                      ? {
+                          color: "oklch(0.88 0.18 85)",
+                          borderBottom: "2px solid oklch(0.78 0.18 85)",
+                        }
+                      : { color: "oklch(0.55 0.04 285)" }
+                  }
                 >
                   {link.icon}
                   {link.label}
                   {badge > 0 && (
-                    <span className="absolute top-1.5 right-1/4 min-w-[14px] h-[14px] flex items-center justify-center bg-arena-neon text-arena-darker text-[8px] font-bold rounded-full px-0.5">
+                    <span
+                      className="absolute top-1.5 right-1/4 min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-bold rounded-full px-0.5"
+                      style={{
+                        background: "oklch(0.78 0.18 85)",
+                        color: "oklch(0.1 0.03 285)",
+                      }}
+                    >
                       {badge > 9 ? "9+" : badge}
                     </span>
                   )}
@@ -140,13 +193,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={() => setQueueOpen(true)}
-              className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold text-muted-foreground relative"
+              className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold relative"
+              style={{ color: "oklch(0.55 0.04 285)" }}
               aria-label="Open queue"
+              data-ocid="nav.mobile.queue.button"
             >
               <ListMusic className="w-4 h-4" />
               Queue
               {queue.length > 0 && (
-                <span className="absolute top-1.5 right-1/4 min-w-[16px] h-[16px] flex items-center justify-center bg-arena-neon text-arena-darker text-[9px] font-bold rounded-full px-0.5">
+                <span
+                  className="absolute top-1.5 right-1/4 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-bold rounded-full px-0.5"
+                  style={{
+                    background: "oklch(0.78 0.18 85)",
+                    color: "oklch(0.1 0.03 285)",
+                  }}
+                >
                   {queue.length > 9 ? "9+" : queue.length}
                 </span>
               )}
@@ -159,23 +220,50 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t border-arena-border bg-arena-surface/50 py-6 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
+      <footer
+        className="py-6 mt-auto"
+        style={{
+          borderTop: "1px solid oklch(0.78 0.18 85 / 0.2)",
+          background: "oklch(0.08 0.02 285 / 0.8)",
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
           <div className="flex items-center gap-2">
-            <span className="font-display text-arena-neon text-lg">
+            <Crown
+              className="w-4 h-4"
+              style={{ color: "oklch(0.78 0.18 85)" }}
+            />
+            <span
+              className="font-display font-bold text-lg tracking-widest uppercase"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.92 0.15 90), oklch(0.78 0.18 85))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
               THE ARENA
             </span>
-            <span>© {new Date().getFullYear()}</span>
+            <span style={{ color: "oklch(0.45 0.03 285)" }}>
+              © {new Date().getFullYear()}
+            </span>
           </div>
-          <div className="flex items-center gap-1">
+          <div
+            className="flex items-center gap-1"
+            style={{ color: "oklch(0.45 0.03 285)" }}
+          >
             Built with{" "}
-            <Heart className="w-3.5 h-3.5 text-arena-neon fill-arena-neon mx-0.5" />{" "}
+            <span style={{ color: "oklch(0.78 0.18 85)" }} className="mx-0.5">
+              ♛
+            </span>{" "}
             using{" "}
             <a
               href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname || "the-arena")}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-arena-neon hover:underline font-semibold"
+              className="font-semibold hover:underline"
+              style={{ color: "oklch(0.78 0.18 85)" }}
             >
               caffeine.ai
             </a>

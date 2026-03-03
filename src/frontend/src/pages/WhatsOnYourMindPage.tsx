@@ -396,13 +396,12 @@ function PostCard({
       {mediaUrl && (
         <div className="rounded-xl overflow-hidden mb-3 border border-arena-border">
           {isVideo ? (
+            // biome-ignore lint/a11y/useMediaCaption: user-generated content; captions not available
             <video
               src={mediaUrl}
               controls
               className="w-full max-h-80 object-cover bg-black"
-            >
-              <track kind="captions" />
-            </video>
+            />
           ) : (
             <img
               src={mediaUrl}

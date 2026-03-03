@@ -1,4 +1,27 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Bebas+Neue&display=swap");
+@font-face {
+  font-family: "Playfair Display";
+  src: url("/assets/fonts/PlayfairDisplay[wght].woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/assets/fonts/BricolageGrotesque[opsz,wdth,wght].woff2")
+    format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Outfit";
+  src: url("/assets/fonts/Outfit[wght].woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -8,88 +31,97 @@
   :root {
     --radius: 0.5rem;
 
-    /* Arena Dark Theme - Light mode (still dark-ish for brand consistency) */
-    --background: 0.12 0.005 260;
-    --foreground: 0.95 0.01 260;
-    --card: 0.16 0.008 260;
-    --card-foreground: 0.95 0.01 260;
-    --popover: 0.18 0.008 260;
-    --popover-foreground: 0.95 0.01 260;
-    --primary: 0.78 0.18 65;
-    --primary-foreground: 0.1 0.005 260;
-    --secondary: 0.22 0.01 260;
-    --secondary-foreground: 0.9 0.01 260;
-    --muted: 0.2 0.008 260;
-    --muted-foreground: 0.6 0.01 260;
-    --accent: 0.78 0.18 65;
-    --accent-foreground: 0.1 0.005 260;
+    /* Royal Dark Theme — deep indigo/midnight purple + gold */
+    --background: 0.07 0.02 285;
+    --foreground: 0.95 0.01 80;
+    --card: 0.11 0.025 285;
+    --card-foreground: 0.95 0.01 80;
+    --popover: 0.12 0.025 285;
+    --popover-foreground: 0.95 0.01 80;
+    --primary: 0.78 0.18 85;
+    --primary-foreground: 0.1 0.03 285;
+    --secondary: 0.52 0.2 285;
+    --secondary-foreground: 0.95 0.01 80;
+    --muted: 0.15 0.02 285;
+    --muted-foreground: 0.55 0.03 285;
+    --accent: 0.78 0.18 85;
+    --accent-foreground: 0.1 0.03 285;
     --destructive: 0.577 0.245 27.325;
     --destructive-foreground: 0.985 0 0;
-    --border: 0.28 0.01 260;
-    --input: 0.22 0.01 260;
-    --ring: 0.78 0.18 65;
+    --border: 0.22 0.04 285;
+    --input: 0.16 0.03 285;
+    --ring: 0.78 0.18 85;
 
-    /* Arena specific */
-    --neon: 0.78 0.18 65;
-    --neon-glow: 0.78 0.18 65;
-    --arena-surface: 0.16 0.008 260;
-    --arena-surface-2: 0.2 0.01 260;
+    /* Royal specific */
+    --gold: 0.78 0.18 85;
+    --gold-bright: 0.88 0.2 85;
+    --gold-dim: 0.62 0.14 85;
+    --royal-purple: 0.35 0.18 295;
+    --royal-deep: 0.07 0.02 285;
+    --royal-surface: 0.12 0.025 285;
+    --royal-surface-2: 0.17 0.03 285;
+    --royal-border: 0.22 0.04 285;
 
-    --chart-1: 0.78 0.18 65;
-    --chart-2: 0.6 0.118 184.704;
-    --chart-3: 0.398 0.07 227.392;
-    --chart-4: 0.828 0.189 84.429;
-    --chart-5: 0.769 0.188 70.08;
+    --chart-1: 0.78 0.18 85;
+    --chart-2: 0.62 0.22 285;
+    --chart-3: 0.55 0.18 300;
+    --chart-4: 0.7 0.2 70;
+    --chart-5: 0.58 0.25 310;
 
-    --sidebar: 0.14 0.008 260;
-    --sidebar-foreground: 0.95 0.01 260;
-    --sidebar-primary: 0.78 0.18 65;
-    --sidebar-primary-foreground: 0.1 0.005 260;
-    --sidebar-accent: 0.22 0.01 260;
-    --sidebar-accent-foreground: 0.9 0.01 260;
-    --sidebar-border: 0.28 0.01 260;
-    --sidebar-ring: 0.78 0.18 65;
+    --sidebar: 0.09 0.02 285;
+    --sidebar-foreground: 0.95 0.01 80;
+    --sidebar-primary: 0.78 0.18 85;
+    --sidebar-primary-foreground: 0.1 0.03 285;
+    --sidebar-accent: 0.16 0.03 285;
+    --sidebar-accent-foreground: 0.95 0.01 80;
+    --sidebar-border: 0.22 0.04 285;
+    --sidebar-ring: 0.78 0.18 85;
   }
 
   .dark {
-    --background: 0.1 0.005 260;
-    --foreground: 0.95 0.01 260;
-    --card: 0.14 0.008 260;
-    --card-foreground: 0.95 0.01 260;
-    --popover: 0.16 0.008 260;
-    --popover-foreground: 0.95 0.01 260;
-    --primary: 0.78 0.18 65;
-    --primary-foreground: 0.1 0.005 260;
-    --secondary: 0.2 0.01 260;
-    --secondary-foreground: 0.9 0.01 260;
-    --muted: 0.18 0.008 260;
-    --muted-foreground: 0.55 0.01 260;
-    --accent: 0.78 0.18 65;
-    --accent-foreground: 0.1 0.005 260;
+    --background: 0.07 0.02 285;
+    --foreground: 0.95 0.01 80;
+    --card: 0.11 0.025 285;
+    --card-foreground: 0.95 0.01 80;
+    --popover: 0.12 0.025 285;
+    --popover-foreground: 0.95 0.01 80;
+    --primary: 0.78 0.18 85;
+    --primary-foreground: 0.1 0.03 285;
+    --secondary: 0.52 0.2 285;
+    --secondary-foreground: 0.95 0.01 80;
+    --muted: 0.15 0.02 285;
+    --muted-foreground: 0.55 0.03 285;
+    --accent: 0.78 0.18 85;
+    --accent-foreground: 0.1 0.03 285;
     --destructive: 0.704 0.191 22.216;
     --destructive-foreground: 0.985 0 0;
-    --border: 0.25 0.01 260;
-    --input: 0.2 0.01 260;
-    --ring: 0.78 0.18 65;
+    --border: 0.22 0.04 285;
+    --input: 0.16 0.03 285;
+    --ring: 0.78 0.18 85;
 
-    --neon: 0.78 0.18 65;
-    --arena-surface: 0.14 0.008 260;
-    --arena-surface-2: 0.18 0.01 260;
+    --gold: 0.78 0.18 85;
+    --gold-bright: 0.88 0.2 85;
+    --gold-dim: 0.62 0.14 85;
+    --royal-purple: 0.35 0.18 295;
+    --royal-deep: 0.07 0.02 285;
+    --royal-surface: 0.12 0.025 285;
+    --royal-surface-2: 0.17 0.03 285;
+    --royal-border: 0.22 0.04 285;
 
-    --chart-1: 0.78 0.18 65;
-    --chart-2: 0.6 0.118 184.704;
-    --chart-3: 0.398 0.07 227.392;
-    --chart-4: 0.828 0.189 84.429;
-    --chart-5: 0.769 0.188 70.08;
+    --chart-1: 0.78 0.18 85;
+    --chart-2: 0.62 0.22 285;
+    --chart-3: 0.55 0.18 300;
+    --chart-4: 0.7 0.2 70;
+    --chart-5: 0.58 0.25 310;
 
-    --sidebar: 0.12 0.008 260;
-    --sidebar-foreground: 0.95 0.01 260;
-    --sidebar-primary: 0.78 0.18 65;
-    --sidebar-primary-foreground: 0.1 0.005 260;
-    --sidebar-accent: 0.2 0.01 260;
-    --sidebar-accent-foreground: 0.9 0.01 260;
-    --sidebar-border: 0.25 0.01 260;
-    --sidebar-ring: 0.78 0.18 65;
+    --sidebar: 0.09 0.02 285;
+    --sidebar-foreground: 0.95 0.01 80;
+    --sidebar-primary: 0.78 0.18 85;
+    --sidebar-primary-foreground: 0.1 0.03 285;
+    --sidebar-accent: 0.16 0.03 285;
+    --sidebar-accent-foreground: 0.95 0.01 80;
+    --sidebar-border: 0.22 0.04 285;
+    --sidebar-ring: 0.78 0.18 85;
   }
 
   * {
@@ -99,30 +131,62 @@
   body {
     @apply bg-background text-foreground;
     font-family: "Outfit", sans-serif;
+    background-image: radial-gradient(
+        ellipse 120% 80% at 50% -10%,
+        oklch(0.22 0.12 285 / 0.4) 0%,
+        transparent 60%
+      ),
+      radial-gradient(
+        ellipse 60% 40% at 90% 50%,
+        oklch(0.18 0.1 300 / 0.2) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse 60% 40% at 10% 80%,
+        oklch(0.15 0.08 270 / 0.2) 0%,
+        transparent 50%
+      );
   }
 
   h1,
   h2,
   h3 {
-    font-family: "Outfit", sans-serif;
-    font-weight: 800;
+    font-family: "Playfair Display", serif;
+    font-weight: 700;
   }
 }
 
 @layer utilities {
-  .neon-glow {
-    box-shadow: 0 0 12px oklch(0.78 0.18 65 / 0.5), 0 0 24px
-      oklch(0.78 0.18 65 / 0.2);
+  .gold-glow {
+    box-shadow: 0 0 12px oklch(0.78 0.18 85 / 0.5), 0 0 24px
+      oklch(0.78 0.18 85 / 0.2);
   }
 
-  .neon-glow-sm {
-    box-shadow: 0 0 6px oklch(0.78 0.18 65 / 0.4), 0 0 12px
-      oklch(0.78 0.18 65 / 0.15);
+  .gold-glow-sm {
+    box-shadow: 0 0 6px oklch(0.78 0.18 85 / 0.4), 0 0 12px
+      oklch(0.78 0.18 85 / 0.15);
   }
 
-  .neon-text {
-    text-shadow: 0 0 10px oklch(0.78 0.18 65 / 0.8), 0 0 20px
-      oklch(0.78 0.18 65 / 0.4);
+  .gold-text {
+    background: linear-gradient(
+      135deg,
+      oklch(0.92 0.15 90),
+      oklch(0.78 0.18 85),
+      oklch(0.65 0.14 75)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px oklch(0.78 0.18 85 / 0.5));
+  }
+
+  .royal-gradient {
+    background: linear-gradient(
+      135deg,
+      oklch(0.07 0.02 285) 0%,
+      oklch(0.14 0.08 295) 50%,
+      oklch(0.07 0.02 285) 100%
+    );
   }
 
   .card-hover {
@@ -131,23 +195,37 @@
   }
 
   .card-hover:hover {
-    box-shadow: 0 0 16px oklch(0.78 0.18 65 / 0.35), 0 0 32px
-      oklch(0.78 0.18 65 / 0.12);
+    box-shadow: 0 0 16px oklch(0.78 0.18 85 / 0.35), 0 0 32px
+      oklch(0.78 0.18 85 / 0.12);
     transform: translateY(-2px);
-    border-color: oklch(0.78 0.18 65 / 0.5);
+    border-color: oklch(0.78 0.18 85 / 0.5);
   }
 
-  .arena-gradient {
-    background: linear-gradient(
-      135deg,
-      oklch(0.1 0.005 260) 0%,
-      oklch(0.14 0.015 280) 50%,
-      oklch(0.1 0.005 260) 100%
-    );
+  /* Legacy compatibility — keep neon-glow working via gold */
+  .neon-glow {
+    box-shadow: 0 0 12px oklch(0.78 0.18 85 / 0.5), 0 0 24px
+      oklch(0.78 0.18 85 / 0.2);
+  }
+
+  .neon-glow-sm {
+    box-shadow: 0 0 6px oklch(0.78 0.18 85 / 0.4), 0 0 12px
+      oklch(0.78 0.18 85 / 0.15);
+  }
+
+  .neon-text {
+    text-shadow: 0 0 10px oklch(0.78 0.18 85 / 0.8), 0 0 20px
+      oklch(0.78 0.18 85 / 0.4);
   }
 
   .font-display {
-    font-family: "Bebas Neue", sans-serif;
-    letter-spacing: 0.05em;
+    font-family: "Playfair Display", serif;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+  }
+
+  .font-display-bold {
+    font-family: "Bricolage Grotesque", sans-serif;
+    letter-spacing: 0.02em;
+    font-weight: 800;
   }
 }

@@ -87,7 +87,7 @@ export default function ContentDetailPage() {
   const commentsSectionRef = useRef<HTMLDivElement>(null);
 
   // Fire-and-forget view increment
-  // biome-ignore lint/correctness/useExhaustiveDependencies: incrementViews is a stable mutate fn; intentionally excluded
+  // biome-ignore lint/correctness/useExhaustiveDependencies: incrementViews is a stable mutate ref; re-running on identity change is intentional
   useEffect(() => {
     if (content?.id) {
       incrementViews(content.id);

@@ -167,11 +167,9 @@ export default function ContentCard({
 
   return (
     <>
-      <article
+      <div
         onClick={handleCardClick}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") handleCardClick();
-        }}
+        onKeyDown={(e) => e.key === "Enter" && handleCardClick()}
         className="group bg-arena-surface border border-border rounded-xl overflow-hidden cursor-pointer hover:border-arena-neon/40 hover:shadow-neon transition-all duration-300"
       >
         {/* Thumbnail */}
@@ -268,7 +266,7 @@ export default function ContentCard({
             </button>
           </div>
         </div>
-      </article>
+      </div>
 
       <ConfirmationDialog
         open={deleteDialogOpen}

@@ -3,10 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   Comment,
   ContentMetadata,
-  Conversation,
   ExternalBlob,
-  Message,
-  Participants,
   Post,
   ThoughtComment,
   UserProfile,
@@ -617,86 +614,6 @@ export function useDeleteThoughtComment() {
       queryClient.invalidateQueries({
         queryKey: ["thoughtComments", postId.toString()],
       });
-    },
-  });
-}
-
-// ─── Messaging ────────────────────────────────────────────────────────────────
-
-export function useGetConversations() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<Conversation[]>({
-    queryKey: ["conversations"],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getConversations();
-    },
-    enabled: !!actor && !actorFetching && !!identity,
-    refetchInterval: 5000,
-  });
-}
-
-export function useGetMessages(partner: Principal | undefined) {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
-  const partnerStr = partner?.toString();
-
-  return useQuery<Message[] | null>({
-    queryKey: ["messages", partnerStr],
-    queryFn: async () => {
-      if (!actor || !partner) return null;
-      return actor.getMessages(partner);
-    },
-    enabled: !!actor && !actorFetching && !!identity && !!partner,
-    refetchInterval: 3000,
-  });
-}
-
-export function useSendMessage() {
-  const { actor } = useActor();
-  const { identity } = useInternetIdentity();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      recipient,
-      content,
-    }: { recipient: Principal; content: string }) => {
-      if (!actor) throw new Error("Actor not available");
-      if (!identity) throw new Error("Not authenticated");
-      return actor.sendMessage(recipient, content);
-    },
-    onSuccess: (_data, { recipient }) => {
-      queryClient.invalidateQueries({
-        queryKey: ["messages", recipient.toString()],
-      });
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-    },
-  });
-}
-
-export function useMarkMessageAsRead() {
-  const { actor } = useActor();
-  const { identity } = useInternetIdentity();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      conversationKey,
-      messageIndex,
-    }: {
-      conversationKey: Participants;
-      messageIndex: number;
-    }) => {
-      if (!actor) throw new Error("Actor not available");
-      if (!identity) throw new Error("Not authenticated");
-      return actor.markMessageAsRead(conversationKey, BigInt(messageIndex));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      queryClient.invalidateQueries({ queryKey: ["messages"] });
     },
   });
 }

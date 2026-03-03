@@ -26,6 +26,7 @@ export default function ThumbnailCreator({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // For audio, default to upload mode
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mediaFile identity change intentionally triggers reset
   useEffect(() => {
     if (isAudio) {
       setMode("upload");
@@ -34,7 +35,7 @@ export default function ThumbnailCreator({
     }
     setPreviewUrl(null);
     setCaptured(false);
-  }, [isAudio]);
+  }, [isAudio, mediaFile]);
 
   // Load video source for frame capture
   useEffect(() => {

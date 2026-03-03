@@ -17,7 +17,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Outfit', 'system-ui', 'sans-serif'],
-        display: ['Bebas Neue', 'sans-serif'],
+        display: ['Playfair Display', 'Georgia', 'serif'],
+        'display-bold': ['Bricolage Grotesque', 'sans-serif'],
         body: ['Outfit', 'sans-serif'],
       },
       colors: {
@@ -71,16 +72,24 @@ export default {
           border: 'oklch(var(--sidebar-border))',
           ring: 'oklch(var(--sidebar-ring))'
         },
-        // Arena-specific tokens
+        // Royal Arena tokens
         arena: {
-          dark: 'oklch(0.1 0.005 260)',
-          darker: 'oklch(0.08 0.005 260)',
-          surface: 'oklch(0.14 0.008 260)',
-          surface2: 'oklch(0.18 0.01 260)',
-          neon: 'oklch(0.78 0.18 65)',
-          'neon-dim': 'oklch(0.65 0.14 65)',
-          'neon-bright': 'oklch(0.88 0.2 65)',
-          border: 'oklch(0.28 0.01 260)',
+          dark: 'oklch(0.07 0.02 285)',
+          darker: 'oklch(0.04 0.01 285)',
+          surface: 'oklch(0.12 0.025 285)',
+          surface2: 'oklch(0.17 0.03 285)',
+          // Gold accent
+          neon: 'oklch(0.78 0.18 85)',
+          'neon-dim': 'oklch(0.62 0.14 85)',
+          'neon-bright': 'oklch(0.88 0.2 85)',
+          gold: 'oklch(0.78 0.18 85)',
+          'gold-bright': 'oklch(0.88 0.2 85)',
+          'gold-dim': 'oklch(0.62 0.14 85)',
+          // Purple tones
+          border: 'oklch(0.22 0.04 285)',
+          purple: 'oklch(0.52 0.2 285)',
+          'purple-deep': 'oklch(0.35 0.18 295)',
+          violet: 'oklch(0.55 0.22 300)',
         }
       },
       borderRadius: {
@@ -90,10 +99,13 @@ export default {
       },
       boxShadow: {
         xs: '0 1px 2px 0 rgba(0,0,0,0.05)',
-        'neon': '0 0 12px oklch(0.78 0.18 65 / 0.5), 0 0 24px oklch(0.78 0.18 65 / 0.2)',
-        'neon-sm': '0 0 6px oklch(0.78 0.18 65 / 0.4), 0 0 12px oklch(0.78 0.18 65 / 0.15)',
-        'neon-lg': '0 0 20px oklch(0.78 0.18 65 / 0.6), 0 0 40px oklch(0.78 0.18 65 / 0.25)',
-        'card-hover': '0 0 16px oklch(0.78 0.18 65 / 0.35), 0 0 32px oklch(0.78 0.18 65 / 0.12)',
+        'gold': '0 0 12px oklch(0.78 0.18 85 / 0.5), 0 0 24px oklch(0.78 0.18 85 / 0.2)',
+        'gold-sm': '0 0 6px oklch(0.78 0.18 85 / 0.4), 0 0 12px oklch(0.78 0.18 85 / 0.15)',
+        'gold-lg': '0 0 20px oklch(0.78 0.18 85 / 0.6), 0 0 40px oklch(0.78 0.18 85 / 0.25)',
+        'neon': '0 0 12px oklch(0.78 0.18 85 / 0.5), 0 0 24px oklch(0.78 0.18 85 / 0.2)',
+        'neon-sm': '0 0 6px oklch(0.78 0.18 85 / 0.4), 0 0 12px oklch(0.78 0.18 85 / 0.15)',
+        'neon-lg': '0 0 20px oklch(0.78 0.18 85 / 0.6), 0 0 40px oklch(0.78 0.18 85 / 0.25)',
+        'card-hover': '0 0 16px oklch(0.78 0.18 85 / 0.35), 0 0 32px oklch(0.78 0.18 85 / 0.12)',
       },
       keyframes: {
         'accordion-down': {
@@ -104,15 +116,20 @@ export default {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' }
         },
-        'pulse-neon': {
-          '0%, 100%': { boxShadow: '0 0 8px oklch(0.78 0.18 65 / 0.4)' },
-          '50%': { boxShadow: '0 0 20px oklch(0.78 0.18 65 / 0.8), 0 0 40px oklch(0.78 0.18 65 / 0.3)' },
+        'pulse-gold': {
+          '0%, 100%': { boxShadow: '0 0 8px oklch(0.78 0.18 85 / 0.4)' },
+          '50%': { boxShadow: '0 0 20px oklch(0.78 0.18 85 / 0.8), 0 0 40px oklch(0.78 0.18 85 / 0.3)' },
+        },
+        'shimmer': {
+          '0%': { backgroundPosition: '-200% center' },
+          '100%': { backgroundPosition: '200% center' },
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'pulse-neon': 'pulse-neon 2s ease-in-out infinite',
+        'pulse-gold': 'pulse-gold 2s ease-in-out infinite',
+        'shimmer': 'shimmer 3s linear infinite',
       }
     }
   },
