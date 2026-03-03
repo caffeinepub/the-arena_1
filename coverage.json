@@ -1,39 +1,56 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-03-03T04:01:22.423Z",
+  "generatedAt": "2026-03-03T04:10:31.742Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 0,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "In the ConversationView component, update the message input area so that pressing the Enter key (without Shift) submits and sends the message, while Shift+Enter inserts a newline.",
-        "status": "missing",
+        "summary": "Display a timestamp on every message bubble in ConversationView showing when the message was sent or received. The timestamp should be formatted in a human-readable way (e.g., '2:45 PM' for today's messages, or 'Mon 2:45 PM' for older messages) and positioned below each message bubble.",
+        "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/ConversationView.tsx"
         ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/src/components/ConversationView.tsx"
+        ]
       },
       {
         "id": "REQ-2",
-        "summary": "In the ConversationView component, ensure a visible 'Send' button is displayed alongside the message input. The button must be clearly styled and clickable to submit the message, consistent with the Arena neon dark theme.",
-        "status": "missing",
+        "summary": "Add a Reply button to every message bubble in ConversationView. When clicked, it should populate the message input field with a quoted preview of the original message (e.g., prepend '> [original message text]\\n' to the input) and focus the input so the user can type their reply.",
+        "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/ConversationView.tsx"
         ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/src/components/ConversationView.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Ensure the message data model used in ConversationView exposes a timestamp field (createdAt or similar) from the backend so it can be rendered in the frontend. If the existing Message type already returns a timestamp, confirm it is passed through to the ConversationView component and each message bubble.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/ConversationView.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/ConversationView.tsx"
+        ]
       }
     ]
   },
   "changedFiles": [
     "build-request.json",
     "feature_evidence.json",
+    "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/components/ConversationView.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

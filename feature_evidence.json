@@ -1,4 +1,65 @@
 {
   "kind": "feature_evidence_report",
-  "features": []
+  "features": [
+    {
+      "featureId": "feature-display-a-timestamp-on-every-message-bubble-in-conversationview-showing-when-the-message-was-sent-or-received-the-timestamp-should-be-formatted-in-a-human-readable-way-e-g-2-45-pm-for-today-s-messages-or-mon-2-45-pm-for-older-messages-and-positioned-below-each-message-bubble",
+      "featureTitle": "Display a timestamp on every message bubble in ConversationView showing when the message was sent or received. The timestamp should be formatted in a human-readable way (e.g., '2:45 PM' for today's messages, or 'Mon 2:45 PM' for older messages) and positioned below each message bubble.",
+      "files": [
+        "frontend/src/components/ConversationView.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-reply-button-to-every-message-bubble-in-conversationview-when-clicked-it-should-populate-the-message-input-field-with-a-quoted-preview-of-the-original-message-e-g-prepend-original-message-text-n-to-the-input-and-focus-the-input-so-the-user-can-type-their-reply",
+      "featureTitle": "Add a Reply button to every message bubble in ConversationView. When clicked, it should populate the message input field with a quoted preview of the original message (e.g., prepend '> [original message text]\\n' to the input) and focus the input so the user can type their reply.",
+      "files": [
+        "frontend/src/components/ConversationView.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-the-message-data-model-used-in-conversationview-exposes-a-timestamp-field-createdat-or-similar-from-the-backend-so-it-can-be-rendered-in-the-frontend-if-the-existing-message-type-already-returns-a-timestamp-confirm-it-is-passed-through-to-the-conversationview-component-and-each-message-bubble",
+      "featureTitle": "Ensure the message data model used in ConversationView exposes a timestamp field (createdAt or similar) from the backend so it can be rendered in the frontend. If the existing Message type already returns a timestamp, confirm it is passed through to the ConversationView component and each message bubble.",
+      "files": [
+        "frontend/src/components/ConversationView.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    }
+  ]
 }

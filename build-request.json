@@ -1,57 +1,77 @@
 {
   "kind": "build_request",
-  "title": "Add keyboard send (Enter key) and Send button to message input",
-  "projectName": "The Arena",
+  "title": "Add message timestamps and reply button to conversation view",
+  "projectName": "Arena",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "In the ConversationView component, update the message input area so that pressing the Enter key (without Shift) submits and sends the message, while Shift+Enter inserts a newline.",
+      "text": "Display a timestamp on every message bubble in ConversationView showing when the message was sent or received. The timestamp should be formatted in a human-readable way (e.g., '2:45 PM' for today's messages, or 'Mon 2:45 PM' for older messages) and positioned below each message bubble.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Add keyboard and send tab to message"
+          "show when messages sent and received"
         ]
       },
       "acceptanceCriteria": [
-        "Pressing Enter in the message input field sends the message without requiring a button click.",
-        "Pressing Shift+Enter inserts a newline in the message input instead of sending.",
-        "After sending via Enter, the input field is cleared."
+        "Every message bubble in ConversationView displays a timestamp below it",
+        "Timestamps show time only (e.g., '2:45 PM') for messages sent today",
+        "Timestamps show day and time (e.g., 'Mon 2:45 PM') for messages older than today",
+        "Timestamps are visually subtle (muted/small text) and do not overwhelm the message content",
+        "Both sent and received messages show timestamps"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "In the ConversationView component, ensure a visible 'Send' button is displayed alongside the message input. The button must be clearly styled and clickable to submit the message, consistent with the Arena neon dark theme.",
+      "text": "Add a Reply button to every message bubble in ConversationView. When clicked, it should populate the message input field with a quoted preview of the original message (e.g., prepend '> [original message text]\\n' to the input) and focus the input so the user can type their reply.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Add keyboard and send tab to message"
+          "add a reply button to every message"
         ]
       },
       "acceptanceCriteria": [
-        "A Send button is visible next to the message text input at all times.",
-        "Clicking the Send button submits the current message.",
-        "The Send button is disabled when the input is empty.",
-        "After sending via the button, the input field is cleared and focus returns to the input."
+        "Every message bubble in ConversationView has a Reply button visible on hover or as a persistent icon",
+        "Clicking Reply populates the message input with a quoted reference to the original message content",
+        "The message input is focused automatically after clicking Reply",
+        "A visual indicator (e.g., a reply-to banner above the input) shows which message is being replied to, with an option to cancel the reply",
+        "The reply context is cleared after the reply message is sent"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Ensure the message data model used in ConversationView exposes a timestamp field (createdAt or similar) from the backend so it can be rendered in the frontend. If the existing Message type already returns a timestamp, confirm it is passed through to the ConversationView component and each message bubble.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "show when messages sent and received"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The Message type in the backend includes a timestamp field (Int or Time)",
+        "The timestamp is returned in the conversation query results",
+        "The frontend ConversationView receives and renders the timestamp for each message"
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files under frontend/src/hooks/ (immutable paths).",
-    "Do not modify frontend/src/components/ui/ components.",
-    "Preserve existing message sending logic and React Query mutations in ConversationView."
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
+    "Reply functionality should be client-side only (quoted context prepended to message text); do not add a separate reply thread data model to the backend unless the timestamp field is missing"
   ],
   "nonGoals": [
-    "Adding real-time/WebSocket message delivery.",
-    "Changing backend messaging API or data models.",
-    "Adding emoji picker or file attachment to the message input.",
-    "Modifying the conversation list panel layout."
+    "Threaded reply chains or nested reply views",
+    "Read receipts or delivery status indicators beyond what already exists",
+    "Push notifications for new messages",
+    "Editing or deleting sent messages"
   ],
   "imageRequirements": {
     "required": [],
