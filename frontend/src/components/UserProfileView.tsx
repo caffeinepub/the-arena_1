@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { UserRound, Users, UserCheck, Loader2, ArrowLeft, MessageCircle } from 'lucide-react';
 import { Principal } from '@dfinity/principal';
@@ -13,6 +13,7 @@ import {
   useUnfollowUser,
 } from '../hooks/useQueries';
 import { toast } from 'sonner';
+import FollowersModal from './FollowersModal';
 
 interface UserProfileViewProps {
   targetPrincipal: Principal;
@@ -22,6 +23,7 @@ interface UserProfileViewProps {
 export default function UserProfileView({ targetPrincipal, displayName }: UserProfileViewProps) {
   const navigate = useNavigate();
   const { identity } = useInternetIdentity();
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
 
   const isOwnProfile = identity
     ? identity.getPrincipal().toString() === targetPrincipal.toString()
@@ -150,13 +152,16 @@ export default function UserProfileView({ targetPrincipal, displayName }: UserPr
                 {profileLoading ? (
                   <Skeleton className="h-4 w-24" />
                 ) : (
-                  <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <button
+                    onClick={() => setIsFollowersModalOpen(true)}
+                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-arena-neon transition-colors cursor-pointer group"
+                  >
                     <Users className="w-4 h-4 text-arena-neon" />
-                    <span className="font-semibold text-foreground">
+                    <span className="font-semibold text-foreground group-hover:text-arena-neon transition-colors">
                       {followerCount.toString()}
                     </span>
-                    <span>Followers</span>
-                  </span>
+                    <span className="group-hover:text-arena-neon transition-colors">Followers</span>
+                  </button>
                 )}
                 {profileLoading ? (
                   <Skeleton className="h-4 w-24" />
@@ -239,6 +244,13 @@ export default function UserProfileView({ targetPrincipal, displayName }: UserPr
           </div>
         </div>
       </div>
+
+      {/* Followers Modal */}
+      <FollowersModal
+        user={targetPrincipal}
+        open={isFollowersModalOpen}
+        onClose={() => setIsFollowersModalOpen(false)}
+      />
     </div>
   );
 }

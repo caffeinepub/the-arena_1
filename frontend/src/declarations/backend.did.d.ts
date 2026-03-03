@@ -129,6 +129,7 @@ export interface _SERVICE {
   >,
   'getConversations' : ActorMethod<[], Array<Conversation>>,
   'getCounts' : ActorMethod<[Principal], [] | [Counts]>,
+  'getFollowers' : ActorMethod<[Principal], Array<Principal>>,
   'getLikesCount' : ActorMethod<[ContentId], bigint>,
   'getMessages' : ActorMethod<[Principal], [] | [Array<Message>]>,
   'getMyThoughts' : ActorMethod<[], Array<Post>>,

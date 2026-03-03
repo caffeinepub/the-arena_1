@@ -1,12 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Display the uploader's artist/profile display name in the "Uploaded by" label on content cards and detail pages.
+**Goal:** Make follower lists and counts publicly visible to all users (authenticated or not) on The Arena.
 
 **Planned changes:**
-- In the `ContentCard` component, look up the uploader's profile by their principal and render their display name in the "Uploaded by" label (e.g., "Uploaded by ArtistName").
-- Apply the same fix on `ContentDetailPage` (and any other location) where "Uploaded by" is displayed.
-- If the uploader has no display name, fall back to a shortened principal or "Unknown Artist".
-- Make the displayed name link/navigate to the uploader's profile page.
+- Add a public backend query that returns the list of followers for any user principal, callable without authentication.
+- Display the follower count on every user's profile page, visible to all visitors including unauthenticated users.
+- Make the follower count clickable to open a modal/popover listing the display names of all followers.
+- Fetch the followers list using the new public backend query for both own and other users' profiles.
 
-**User-visible outcome:** Users see the actual artist/profile name next to "Uploaded by" on content cards and detail pages, with a link to the uploader's profile, instead of a raw principal or placeholder text.
+**User-visible outcome:** Any visitor (logged in or not) can view a profile's follower count and click it to see the full list of followers by display name.

@@ -1,16 +1,16 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 5,
-  "summary": "Messaging application with user-to-user conversations. Adding keyboard/send button functionality and updating uploaded-by display to show the artist's profile name instead of a generic label.",
+  "projectStateVersion": 3,
+  "summary": "Social platform where users can see follower counts and follower lists",
   "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-in-the-contentcard-component-and-any-other-location-that-displays-an-uploaded-by-label-replace-the-generic-identifier-with-the-actual-artist-user-display-name-fetched-from-their-profile-look-up-the-uploader-s-profile-using-their-principal-and-render-their-display-name-e-g-uploaded-by-artistname-instead-of-a-raw-principal-or-placeholder-text",
-      "title": "In the ContentCard component (and any other location that displays an 'Uploaded by' label), replace the generic identifier with the actual artist/user display name fetched from their profile. Look up the uploader's profile using their principal and render their display name (e.g., 'Uploaded by <ArtistName>') instead of a raw principal or placeholder text.",
+      "id": "feature-in-userprofileview-display-the-follower-count-as-a-clickable-element-when-clicked-open-a-modal-or-popover-listing-the-display-names-or-principal-derived-fallback-of-all-followers-of-that-profile-visible-to-all-visitors-including-unauthenticated-users",
+      "title": "In UserProfileView, display the follower count as a clickable element. When clicked, open a modal or popover listing the display names (or principal-derived fallback) of all followers of that profile, visible to all visitors including unauthenticated users.",
       "reqIds": [
-        "REQ-3"
+        "REQ-2"
       ],
       "version": 1
     }
@@ -18,34 +18,19 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add keyboard and send tab/button to message input",
+      "summary": "Show followers to everyone - make follower lists/counts publicly visible to all users",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "In the ConversationView component, update the message input area so that pressing the Enter key (without Shift) submits and sends the message, while Shift+Enter inserts a newline.",
+      "summary": "Expose a public backend query that returns the list of followers for any given user principal, callable without authentication.",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "In the ConversationView component, ensure a visible 'Send' button is displayed alongside the message input. The button must be clearly styled and clickable to submit the message, consistent with the Arena neon dark theme.",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Change the 'Uploaded by' label to display the artist's profile name instead of a generic identifier.",
-      "reqIds": [],
-      "status": "pending"
     }
   ],
-  "gameProjectType": "none",
   "projectName": "The Arena",
   "clarification_mode": "instant",
   "clarification_rounds": 0

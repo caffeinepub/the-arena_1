@@ -1,36 +1,54 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-03-03T04:27:14.062Z",
+  "generatedAt": "2026-03-03T05:47:34.314Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
+    "total": 2,
     "implemented": 1,
     "items": [
       {
-        "id": "REQ-3",
-        "summary": "In the ContentCard component (and any other location that displays an 'Uploaded by' label), replace the generic identifier with the actual artist/user display name fetched from their profile. Look up the uploader's profile using their principal and render their display name (e.g., 'Uploaded by <ArtistName>') instead of a raw principal or placeholder text.",
+        "id": "REQ-1",
+        "summary": "Expose a public backend query that returns the list of followers for any given user principal, callable without authentication.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-2",
+        "summary": "In UserProfileView, display the follower count as a clickable element. When clicked, open a modal or popover listing the display names (or principal-derived fallback) of all followers of that profile, visible to all visitors including unauthenticated users.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/ContentCard.tsx",
-          "frontend/src/pages/ContentDetailPage.tsx"
+          "frontend/src/components/FollowersModal.tsx",
+          "frontend/src/components/UserProfileView.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/ContentDetailPage.tsx"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/FollowersModal.tsx",
+          "frontend/src/components/UserProfileView.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/pages/ContentDetailPage.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/ConversationView.tsx",
+    "frontend/src/components/FollowersModal.tsx",
+    "frontend/src/components/UserProfileView.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useQueries.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

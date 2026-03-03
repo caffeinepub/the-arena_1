@@ -1,32 +1,55 @@
 {
   "kind": "build_request",
-  "title": "Display artist profile name in 'Uploaded by' label",
+  "title": "Show follower lists and counts publicly to all users",
+  "projectName": "The Arena",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-3",
-      "text": "In the ContentCard component (and any other location that displays an 'Uploaded by' label), replace the generic identifier with the actual artist/user display name fetched from their profile. Look up the uploader's profile using their principal and render their display name (e.g., 'Uploaded by <ArtistName>') instead of a raw principal or placeholder text.",
-      "target": "frontend",
+      "id": "REQ-1",
+      "text": "Expose a public backend query that returns the list of followers for any given user principal, callable without authentication.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-latest"
         ],
         "quotes": [
-          "I want upload by to be the artists name of profile"
+          "I want everyone to see their followers"
         ]
       },
       "acceptanceCriteria": [
-        "The 'Uploaded by' section on ContentCard shows the uploader's profile display name, not a raw principal or generic label.",
-        "If the uploader has no display name set, fall back gracefully (e.g., show a shortened principal or 'Unknown Artist').",
-        "The same fix applies consistently wherever 'Uploaded by' is rendered across the app (e.g., ContentDetailPage if applicable).",
-        "The display name links or navigates to the uploader's user profile page."
+        "An unauthenticated (anonymous) caller can query the followers of any user principal.",
+        "The returned list contains the principals of all users who follow the specified user.",
+        "Existing follow/unfollow logic is not changed."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "In UserProfileView, display the follower count as a clickable element. When clicked, open a modal or popover listing the display names (or principal-derived fallback) of all followers of that profile, visible to all visitors including unauthenticated users.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-latest"
+        ],
+        "quotes": [
+          "I want everyone to see their followers"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The follower count is visible on every user's profile page for all visitors (logged in or not).",
+        "Clicking the follower count opens a list showing each follower's display name.",
+        "The followers list is fetched using the public backend query from REQ-1.",
+        "The list is accessible on both the current user's own profile and other users' profiles."
       ]
     }
   ],
-  "constraints": [],
+  "constraints": [
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
+    "Preserve all existing follow/unfollow functionality and access control logic."
+  ],
   "nonGoals": [
-    "Changing the backend data model for content metadata.",
-    "Modifying the messaging or conversation features."
+    "Changing the following list visibility (only followers list is in scope).",
+    "Adding pagination to the followers list.",
+    "Any changes to the messaging or content upload features."
   ],
   "imageRequirements": {
     "required": [],

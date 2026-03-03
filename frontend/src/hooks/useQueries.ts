@@ -165,6 +165,7 @@ export function useFollowUser() {
       queryClient.invalidateQueries({ queryKey: ['userProfile', targetStr] });
       queryClient.invalidateQueries({ queryKey: ['userProfile', callerStr] });
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['followersList', targetStr] });
     },
   });
 }
@@ -187,7 +188,22 @@ export function useUnfollowUser() {
       queryClient.invalidateQueries({ queryKey: ['userProfile', targetStr] });
       queryClient.invalidateQueries({ queryKey: ['userProfile', callerStr] });
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['followersList', targetStr] });
     },
+  });
+}
+
+export function useGetFollowersList(user: Principal | undefined) {
+  const { actor, isFetching: actorFetching } = useActor();
+  const userStr = user?.toString();
+
+  return useQuery<Principal[]>({
+    queryKey: ['followersList', userStr],
+    queryFn: async () => {
+      if (!actor || !user) return [];
+      return actor.getFollowers(user);
+    },
+    enabled: !!actor && !actorFetching && !!user,
   });
 }
 
@@ -563,13 +579,11 @@ export function useAddThoughtComment() {
 
 export function useDeleteThoughtComment() {
   const { actor } = useActor();
-  const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ postId, commentId }: { postId: bigint; commentId: bigint }) => {
       if (!actor) throw new Error('Actor not available');
-      if (!identity) throw new Error('Not authenticated');
       return actor.deleteThoughtComment(postId, commentId);
     },
     onSuccess: (_data, { postId }) => {
@@ -591,8 +605,7 @@ export function useGetConversations() {
       return actor.getConversations();
     },
     enabled: !!actor && !actorFetching && !!identity,
-    refetchOnWindowFocus: true,
-    refetchInterval: 15000, // Poll every 15 seconds for new messages
+    refetchInterval: 5000,
   });
 }
 
@@ -607,9 +620,8 @@ export function useGetMessages(partner: Principal | undefined) {
       if (!actor || !partner) return null;
       return actor.getMessages(partner);
     },
-    enabled: !!actor && !actorFetching && !!partner && !!identity,
-    refetchOnWindowFocus: true,
-    refetchInterval: 10000, // Poll every 10 seconds for new messages in active conversation
+    enabled: !!actor && !actorFetching && !!identity && !!partner,
+    refetchInterval: 3000,
   });
 }
 
@@ -625,9 +637,8 @@ export function useSendMessage() {
       return actor.sendMessage(recipient, content);
     },
     onSuccess: (_data, { recipient }) => {
-      const recipientStr = recipient.toString();
+      queryClient.invalidateQueries({ queryKey: ['messages', recipient.toString()] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['messages', recipientStr] });
     },
   });
 }
@@ -641,19 +652,17 @@ export function useMarkMessageAsRead() {
     mutationFn: async ({
       conversationKey,
       messageIndex,
-      partnerStr,
     }: {
       conversationKey: Participants;
-      messageIndex: bigint;
-      partnerStr: string;
+      messageIndex: number;
     }) => {
       if (!actor) throw new Error('Actor not available');
       if (!identity) throw new Error('Not authenticated');
-      return actor.markMessageAsRead(conversationKey, messageIndex);
+      return actor.markMessageAsRead(conversationKey, BigInt(messageIndex));
     },
-    onSuccess: (_data, { partnerStr }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['messages', partnerStr] });
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
     },
   });
 }

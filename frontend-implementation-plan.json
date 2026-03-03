@@ -1,32 +1,32 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Display artist profile name in 'Uploaded by' label",
+  "title": "Show follower lists and counts publicly to all users",
   "requirements": [
     {
-      "id": "REQ-3",
-      "summary": "Replace raw principal identifiers with artist display names in 'Uploaded by' labels across the app",
+      "id": "REQ-2",
+      "summary": "Display follower count as a clickable element in UserProfileView that opens a modal listing all followers with display names, accessible to all visitors including unauthenticated users",
       "acceptanceCriteria": [
-        "The 'Uploaded by' section on ContentCard shows the uploader's profile display name, not a raw principal or generic label.",
-        "If the uploader has no display name set, fall back gracefully (e.g., show a shortened principal or 'Unknown Artist').",
-        "The same fix applies consistently wherever 'Uploaded by' is rendered across the app (e.g., ContentDetailPage if applicable).",
-        "The display name links or navigates to the uploader's user profile page."
+        "The follower count is visible on every user's profile page for all visitors (logged in or not).",
+        "Clicking the follower count opens a list showing each follower's display name.",
+        "The followers list is fetched using the public backend query from REQ-1.",
+        "The list is accessible on both the current user's own profile and other users' profiles."
       ],
       "file_operations": [
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add a new React Query hook `useGetUserProfile(user: Principal)` that wraps the backend's `getUserProfile` method to fetch a specific user's profile by their principal. This will be used to look up uploader profiles in the ContentCard and ContentDetailPage components."
+          "description": "Add a new useGetFollowersList hook that calls backend.getFollowers(user) without authentication requirements. This hook accepts a Principal parameter and returns an array of follower Principals. Since getFollowers is already a public query in the backend interface, this hook can be invoked by any visitor (authenticated or anonymous). Use enabled: !!user to conditionally enable the query only when a valid user principal is provided."
         },
         {
-          "path": "frontend/src/components/ContentCard.tsx",
-          "operation": "modify",
-          "description": "Update the ContentCard component to fetch and display the uploader's profile display name using the new `useGetUserProfile` hook with the `content.uploader` principal. Replace the current 'Uploaded by' section to show the artist's name instead of a raw principal. If the profile is loading, show a skeleton or placeholder. If the profile has no name or fetch fails, fall back to a shortened principal (first 8 characters) or 'Unknown Artist'. Make the artist name clickable and navigate to `/profile/{uploader-principal}` using the Link component from TanStack Router."
+          "path": "frontend/src/components/FollowersModal.tsx",
+          "operation": "create",
+          "description": "Create a new modal component that displays a list of followers for a given user. Accept a user Principal prop and an onClose callback. Use the useGetFollowersList hook to fetch the array of follower Principals. For each follower Principal, call useGetUserProfile to retrieve their display name (or fall back to a truncated principal string if no profile exists). Render a scrollable list showing each follower's avatar (if available), display name, and a link to their profile. Include a close button in the modal header. Use the Dialog component from frontend/src/components/ui for consistent styling."
         },
         {
-          "path": "frontend/src/pages/ContentDetailPage.tsx",
+          "path": "frontend/src/components/UserProfileView.tsx",
           "operation": "modify",
-          "description": "Update the ContentDetailPage component to fetch and display the uploader's profile display name using the new `useGetUserProfile` hook with the `content.uploader` principal. Add or update any 'Uploaded by' or artist information display to show the artist's name instead of a raw principal. If the profile is loading, show a skeleton or placeholder. If the profile has no name or fetch fails, fall back to a shortened principal (first 8 characters) or 'Unknown Artist'. Make the artist name clickable and navigate to `/profile/{uploader-principal}` using the Link component from TanStack Router."
+          "description": "Modify the follower count display in UserProfileView to be clickable. Wrap the follower count text in a button element with cursor-pointer styling and an onClick handler that opens the FollowersModal. Maintain a local state boolean (e.g., isFollowersModalOpen) to control modal visibility. Pass the user's Principal to the FollowersModal when rendering it. Ensure the follower count remains visible and clickable for all visitors, including anonymous users. The existing follower count is already fetched via useGetCounts; no changes to that logic are needed."
         }
       ]
     }

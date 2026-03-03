@@ -2,10 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-in-the-contentcard-component-and-any-other-location-that-displays-an-uploaded-by-label-replace-the-generic-identifier-with-the-actual-artist-user-display-name-fetched-from-their-profile-look-up-the-uploader-s-profile-using-their-principal-and-render-their-display-name-e-g-uploaded-by-artistname-instead-of-a-raw-principal-or-placeholder-text",
-      "featureTitle": "In the ContentCard component (and any other location that displays an 'Uploaded by' label), replace the generic identifier with the actual artist/user display name fetched from their profile. Look up the uploader's profile using their principal and render their display name (e.g., 'Uploaded by <ArtistName>') instead of a raw principal or placeholder text.",
+      "featureId": "feature-in-userprofileview-display-the-follower-count-as-a-clickable-element-when-clicked-open-a-modal-or-popover-listing-the-display-names-or-principal-derived-fallback-of-all-followers-of-that-profile-visible-to-all-visitors-including-unauthenticated-users",
+      "featureTitle": "In UserProfileView, display the follower count as a clickable element. When clicked, open a modal or popover listing the display names (or principal-derived fallback) of all followers of that profile, visible to all visitors including unauthenticated users.",
       "files": [
-        "frontend/src/pages/ContentDetailPage.tsx"
+        "frontend/src/components/FollowersModal.tsx",
+        "frontend/src/components/UserProfileView.tsx",
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -17,7 +19,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-3"
+        "REQ-2"
       ],
       "confidence": "high"
     }

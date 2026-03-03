@@ -154,6 +154,11 @@ export const idlService = IDL.Service({
     ),
   'getConversations' : IDL.Func([], [IDL.Vec(Conversation)], ['query']),
   'getCounts' : IDL.Func([IDL.Principal], [IDL.Opt(Counts)], ['query']),
+  'getFollowers' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Vec(IDL.Principal)],
+      ['query'],
+    ),
   'getLikesCount' : IDL.Func([ContentId], [IDL.Nat], ['query']),
   'getMessages' : IDL.Func(
       [IDL.Principal],
@@ -358,6 +363,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getConversations' : IDL.Func([], [IDL.Vec(Conversation)], ['query']),
     'getCounts' : IDL.Func([IDL.Principal], [IDL.Opt(Counts)], ['query']),
+    'getFollowers' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(IDL.Principal)],
+        ['query'],
+      ),
     'getLikesCount' : IDL.Func([ContentId], [IDL.Nat], ['query']),
     'getMessages' : IDL.Func(
         [IDL.Principal],

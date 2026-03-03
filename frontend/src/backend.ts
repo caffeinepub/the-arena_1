@@ -212,6 +212,7 @@ export interface backendInterface {
     getContentBySearchCriteria(criteria: SearchCriteria, _start: bigint, _limit: bigint): Promise<Array<ContentMetadata>>;
     getConversations(): Promise<Array<Conversation>>;
     getCounts(user: Principal): Promise<Counts | null>;
+    getFollowers(user: Principal): Promise<Array<Principal>>;
     getLikesCount(contentId: ContentId): Promise<bigint>;
     getMessages(partner: Principal): Promise<Array<Message> | null>;
     getMyThoughts(): Promise<Array<Post>>;
@@ -644,6 +645,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getCounts(arg0);
             return from_candid_opt_n31(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getFollowers(arg0: Principal): Promise<Array<Principal>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getFollowers(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getFollowers(arg0);
+            return result;
         }
     }
     async getLikesCount(arg0: ContentId): Promise<bigint> {

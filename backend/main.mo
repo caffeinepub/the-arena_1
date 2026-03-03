@@ -3,16 +3,20 @@ import Int "mo:core/Int";
 import Iter "mo:core/Iter";
 import List "mo:core/List";
 import Map "mo:core/Map";
+import Nat "mo:core/Nat";
 import Order "mo:core/Order";
 import Principal "mo:core/Principal";
+import Queue "mo:core/Queue";
 import Runtime "mo:core/Runtime";
 import Set "mo:core/Set";
 import Storage "blob-storage/Storage";
 import Time "mo:core/Time";
+import Migration "migration";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 
+(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -68,6 +72,16 @@ actor {
   let comments = Map.empty<ContentId, Map.Map<CommentId, Comment>>();
   let followees = Map.empty<Principal, Set.Set<Principal>>();
   var nextCommentId : CommentId = 0;
+
+  public query ({ caller }) func getFollowers(user : Principal) : async [Principal] {
+    let followersList = List.empty<Principal>();
+    for ((follower, followeesList) in followees.entries()) {
+      if (followeesList.contains(user)) {
+        followersList.add(follower);
+      };
+    };
+    followersList.reverse().toArray();
+  };
 
   // ========================= Messaging Feature =========================
   public type Participants = {

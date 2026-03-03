@@ -119,6 +119,7 @@ export interface backendInterface {
     getContentBySearchCriteria(criteria: SearchCriteria, _start: bigint, _limit: bigint): Promise<Array<ContentMetadata>>;
     getConversations(): Promise<Array<Conversation>>;
     getCounts(user: Principal): Promise<Counts | null>;
+    getFollowers(user: Principal): Promise<Array<Principal>>;
     getLikesCount(contentId: ContentId): Promise<bigint>;
     getMessages(partner: Principal): Promise<Array<Message> | null>;
     getMyThoughts(): Promise<Array<Post>>;
